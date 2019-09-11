@@ -48,7 +48,7 @@ jobs:
       run: >-
         python -m
         migrate
-        -s "migration_scenarios/${{ matrix.migration-scenario }}"
+        -s "scenarios/${{ matrix.migration-scenario }}"
     - name: Run migration scenario ${{ matrix.migration-scenario }}
       run: |
           for coll_dir in `ls .cache/collections/*/*/* -d`
