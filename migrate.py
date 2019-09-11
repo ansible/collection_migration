@@ -638,7 +638,7 @@ def assemble_collections(spec, args):
             )
 
 
-)ef mark_moved_resources(checkout_dir, namespace, collection, migrated_to_collection):
+def mark_moved_resources(checkout_dir, namespace, collection, migrated_to_collection):
     """Mark migrated paths in botmeta."""
     migrated_to = '.'.join((namespace, collection))
     botmeta_rel_path = '.github/BOTMETA.yml'
