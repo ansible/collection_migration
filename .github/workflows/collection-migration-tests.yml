@@ -36,7 +36,7 @@ jobs:
       run: >-
         python -m
         pip install
-        ansible
+        git+https://github.com/ansible/ansible.git
         logzero
         redbaron
         --user
@@ -49,3 +49,13 @@ jobs:
         python -m
         migrate
         -s "migration_scenarios/${{ matrix.migration-scenario }}"
+    - name: Run migration scenario ${{ matrix.migration-scenario }}
+      run: |
+          for coll_dir in `ls .cache/collections/*/*/* -d`
+          do
+              (
+                  echo "Testing ${coll_dir}..."
+                  cd "${coll_dir}"
+                  ansible-test units --python "${{ matrix.python-version }}" -vvv
+              )
+          done
