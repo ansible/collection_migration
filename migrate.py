@@ -77,6 +77,20 @@ def checkout_repo(vardir=VARDIR, refresh=False):
 
 
 # ===== FILE utils =====
+REMOVE = set()
+def remove(path):
+
+    global REMOVE
+    REMOVE.add(path)
+
+
+def actually_remove()
+
+    global REMOVE
+    for path in REMOVE:
+        subprocess.check_call(('git', 'rm', path), cwd=collection_dir)
+        subprocess.check_call(('git', 'commit', '-m', 'migrated %s' % path, path), cwd=collection_dir)
+
 def read_yaml_file(path):
     with open(path, 'rb') as yaml_file:
         return yaml.safe_load(yaml_file)
@@ -421,7 +435,9 @@ def copy_unit_tests(checkout_path, collection_dir, plugin_type, plugin, spec):
         os.makedirs(dest, exist_ok=True)
 
         for f in files:
-            shutil.copy(os.path.join(test_dir, f), dest)
+            src = s.path.join(test_dir, f)
+            shutil.copy(src, dest)
+            remove(src)
 
         for d in dirs:
             shutil.rmtree(os.path.join(dest, d), ignore_errors=True)
@@ -556,6 +572,7 @@ def assemble_collections(spec, args):
                         else:
                             shutil.copyfile(src, dest, follow_symlinks=False)
 
+                        remove(src)
                         # dont rewrite symlinks, original file should already be handled
                         continue
 
@@ -563,6 +580,7 @@ def assemble_collections(spec, args):
                         # its not all python files, copy and go to next
                         # TODO: handle powershell import rewrites
                         shutil.copyfile(src, dest)
+                        remove(src)
                         continue
 
                     mod_src_text, mod_fst = read_module_txt_n_fst(src)
@@ -590,6 +608,7 @@ def assemble_collections(spec, args):
                         checkout_path, collection_dir,
                         plugin_type, plugin, spec,
                     )
+                    remove(src)
 
             inject_init_into_tree(
                 os.path.join(collection_dir, 'tests', 'unit'),
@@ -1142,6 +1161,8 @@ def main():
                         help='target directory for resulting collections and rpm')
     parser.add_argument('-p', '--preserve-module-subdirs', action='store_true', dest='preserve_module_subdirs', default=False,
                         help='preserve module subdirs per spec')
+    parser.add_argument('-m', '--move-plugins', action='store_true', dest='move_plugins', default=False,
+                        help='remove plugins from source instead of just copying them')
 
     args = parser.parse_args()
 
@@ -1159,6 +1180,9 @@ def main():
 
     # doeet
     assemble_collections(spec, args)
+
+    if args.move_plugins:
+        actually_remove()
 
     global core
     print('======= Assumed stayed in core =======\n')
