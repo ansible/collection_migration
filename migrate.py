@@ -435,7 +435,7 @@ def copy_unit_tests(checkout_path, collection_dir, plugin_type, plugin, spec):
         os.makedirs(dest, exist_ok=True)
 
         for f in files:
-            src = s.path.join(test_dir, f)
+            src = os.path.join(test_dir, f)
             shutil.copy(src, dest)
             remove(src)
 
