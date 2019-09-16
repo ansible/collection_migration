@@ -12,7 +12,6 @@ import re
 import shutil
 import subprocess
 import sys
-import textwrap
 import yaml
 
 from collections import defaultdict
@@ -83,6 +82,26 @@ def checkout_repo(vardir=VARDIR, refresh=False):
 
 
 # ===== FILE utils =====
+REMOVE = set()
+
+
+def remove(path):
+    global REMOVE
+    REMOVE.add(path)
+
+
+def actually_remove(namespace, collection, vardir=VARDIR):
+    global REMOVE
+    releases_dir = os.path.join(vardir, 'releases')
+    devel_path = os.path.join(releases_dir, f'{DEVEL_BRANCH}.git')
+
+    for path in REMOVE:
+        actual_devel_path = os.path.relpath(path, devel_path)
+        subprocess.check_call(('git', 'rm', actual_devel_path), cwd=devel_path)
+
+    subprocess.check_call(('git', 'commit', '-m', 'Migrated to %s.%s' % (namespace, collection)), cwd=devel_path)
+
+
 def read_yaml_file(path):
     with open(path, 'rb') as yaml_file:
         return yaml.safe_load(yaml_file)
@@ -441,7 +460,14 @@ def copy_unit_tests(checkout_path, collection_dir, plugin_type, plugin, spec):
         os.makedirs(dest, exist_ok=True)
 
         for f in files:
-            shutil.copy(os.path.join(test_dir, f), dest)
+            src = os.path.join(test_dir, f)
+            shutil.copy(src, dest)
+
+            if src == '.cache/releases/devel.git/test/units/modules/utils.py':
+                # FIXME this appears to be bundled with each collection (above), so do not remove it, this should stay in core?
+                continue
+
+            remove(src)
 
         for d in dirs:
             shutil.rmtree(os.path.join(dest, d), ignore_errors=True)
@@ -520,6 +546,7 @@ def assemble_collections(spec, args):
                     with open(os.path.join(dest_plugin_base, '__init__.py'), 'w') as f:
                         f.write('')
 
+
                 # process each plugin
                 for plugin in spec[namespace][collection][plugin_type]:
                     plugin_sig = '%s/%s' % (plugin_type, plugin)
@@ -533,7 +560,12 @@ def assemble_collections(spec, args):
 
                     # TODO: currently requires 'full name of file', but should work w/o extension?
                     src = os.path.join(checkout_path, src_plugin_base, plugin)
+
                     migrated_to_collection[collection].add(os.path.join(src_plugin_base, plugin))
+                    remove(src)
+                    if plugin_type in ('modules', 'module_utils') and '/' in plugin:
+                        remove(os.path.join(checkout_path, src_plugin_base, os.path.dirname(plugin), '__init__.py'))
+
                     if (args.preserve_module_subdirs and plugin_type == 'modules') or plugin_type == 'module_utils':
                         dest = os.path.join(dest_plugin_base, plugin)
                         dest_dir = os.path.dirname(dest)
@@ -605,11 +637,12 @@ def assemble_collections(spec, args):
                     write_text_into_file(dest, plugin_data_new)
 
                     integration_test_dirs.extend(poor_mans_integration_tests_discovery(checkout_path, plugin_type, plugin))
-                    # process unit tests TODO: sanity? , integration?
+                    # process unit tests
                     copy_unit_tests(
                         checkout_path, collection_dir,
                         plugin_type, plugin, spec,
                     )
+                    # TODO: sanity tests?
 
             inject_init_into_tree(
                 os.path.join(collection_dir, 'tests', 'unit'),
@@ -659,6 +692,12 @@ def assemble_collections(spec, args):
             mark_moved_resources(
                 checkout_path, namespace, collection, migrated_to_collection[collection],
             )
+
+            if args.move_plugins:
+                actually_remove(namespace, collection)
+
+            global REMOVE
+            REMOVE = set()
 
 
 def publish_to_github(collections_target_dir, spec):
@@ -810,6 +849,8 @@ def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace
                     rewrite_ini(full_path, dest, namespace, collection, spec)
                 else:
                     shutil.copy2(full_path, dest)
+
+                remove(full_path)
 
 
 def rewrite_sh(full_path, dest, namespace, collection, spec):
@@ -1089,6 +1130,8 @@ def main():
         default=False,
         help='preserve module subdirs per spec',
     )
+    parser.add_argument('-m', '--move-plugins', action='store_true', dest='move_plugins', default=False,
+                        help='remove plugins from source instead of just copying them')
 
     args = parser.parse_args()
 
