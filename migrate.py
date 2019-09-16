@@ -546,7 +546,6 @@ def assemble_collections(spec, args):
                     with open(os.path.join(dest_plugin_base, '__init__.py'), 'w') as f:
                         f.write('')
 
-
                 # process each plugin
                 for plugin in spec[namespace][collection][plugin_type]:
                     plugin_sig = '%s/%s' % (plugin_type, plugin)
@@ -564,7 +563,9 @@ def assemble_collections(spec, args):
                     migrated_to_collection[collection].add(os.path.join(src_plugin_base, plugin))
                     remove(src)
                     if plugin_type in ('modules', 'module_utils') and '/' in plugin:
-                        remove(os.path.join(checkout_path, src_plugin_base, os.path.dirname(plugin), '__init__.py'))
+                        init_py_path = os.path.join(checkout_path, src_plugin_base, os.path.dirname(plugin), '__init__.py')
+                        if os.path.exists(init_py_path):
+                            remove(init_py_path)
 
                     if (args.preserve_module_subdirs and plugin_type == 'modules') or plugin_type == 'module_utils':
                         dest = os.path.join(dest_plugin_base, plugin)
