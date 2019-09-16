@@ -562,7 +562,8 @@ def assemble_collections(spec, args):
 
                     migrated_to_collection[collection].add(os.path.join(src_plugin_base, plugin))
                     remove(src)
-                    if plugin_type in ('modules', 'module_utils') and '/' in plugin:
+
+                    if plugin_type in ('modules',) and '/' in plugin:
                         init_py_path = os.path.join(checkout_path, src_plugin_base, os.path.dirname(plugin), '__init__.py')
                         if os.path.exists(init_py_path):
                             remove(init_py_path)
