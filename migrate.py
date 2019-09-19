@@ -989,6 +989,9 @@ def rewrite_sh(full_path, dest, namespace, collection, spec):
                         continue
                     # FIXME list
                     new_plugin_name = get_plugin_fqcn(ns, coll, plugin_name)
+
+                    if args.fail_on_core_rewrite:
+                        raise RuntimeError('Rewriting to %s' % new_plugin_name)
                     contents = contents.replace(key + '=' + plugin_name, key + '=' + new_plugin_name)
                     contents = contents.replace(key + ' ' + plugin_name, key + ' ' + new_plugin_name)
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
@@ -1037,6 +1040,8 @@ def rewrite_ini_section(config, key_map, section, namespace, collection, spec):
                 plugin_namespace, plugin_collection = get_plugin_collection(plugin_name, plugin_type, spec)
                 if plugin_collection in COLLECTION_SKIP_REWRITE:
                     raise LookupError
+                if args.fail_on_core_rewrite:
+                    raise RuntimeError('Rewriting to %s.%s.%s' % (plugin_namespace, plugin_collection, plugin_name))
                 new_plugin_names.append(get_plugin_fqcn(namespace, plugin_collection, plugin_name))
                 integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
             except LookupError:
@@ -1094,9 +1099,13 @@ def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec):
             plugin_name = key[prefix_len:]
             try:
                 plugin_namespace, plugin_collection = get_plugin_collection(plugin_name, 'lookup', spec)
-                if plugin_collection not in COLLECTION_SKIP_REWRITE:
-                    translate.append((prefix + get_plugin_fqcn(namespace, plugin_collection, plugin_name), key))
-                    integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
+                if plugin_collection in COLLECTION_SKIP_REWRITE:
+                    raise LookupError
+
+                if args.fail_on_core_rewrite:
+                    raise RuntimeError('Rewriting to %s.%s.%s' % (plugin_namespace, plugin_collection, plugin_name))
+                translate.append((prefix + get_plugin_fqcn(namespace, plugin_collection, plugin_name), key))
+                integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
             except LookupError:
                 pass
 
@@ -1111,6 +1120,8 @@ def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec):
                     if key != module:
                         continue
                     new_module_name = get_plugin_fqcn(ns, coll, key)
+                    if args.fail_on_core_rewrite:
+                        raise RuntimeError('Rewriting to %s' % new_module_name)
                     translate.append((new_module_name, key))
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
@@ -1131,7 +1142,10 @@ def _rewrite_yaml_mapping_keys(el, namespace, collection, spec):
             plugin_namespace, plugin_collection = get_plugin_collection(el[key], plugin_type, spec)
             if plugin_collection in COLLECTION_SKIP_REWRITE:
                 continue
-            el[key] = get_plugin_fqcn(namespace, plugin_collection, el[key])
+            new_plugin_name = get_plugin_fqcn(namespace, plugin_collection, el[key])
+            if args.fail_on_core_rewrite:
+                raise RuntimeError('Rewriting to %s' % new_plugin_name)
+            el[key] = new_plugin_name
             integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
         except LookupError:
             if '{{' in el[key]:
@@ -1154,7 +1168,10 @@ def _rewrite_yaml_mapping_values(el, namespace, collection, spec):
                         for ns in spec.keys():
                             for coll in get_rewritable_collections(ns, spec):
                                 if item in get_plugins_from_collection(ns, coll, 'modules', spec):
-                                    el[key][idx] = get_plugin_fqcn(ns, coll, el[key][idx])
+                                    new_plugin_name = get_plugin_fqcn(ns, coll, el[key][idx])
+                                    if args.fail_on_core_rewrite:
+                                        raise RuntimeError('Rewriting to %s' % new_plugin_name)
+                                    el[key][idx] = new_plugin_name
                                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
                     if isinstance(el[key][idx], str):
                         # FIXME move to a func
@@ -1176,7 +1193,10 @@ def _rewrite_yaml_lookup(value, namespace, collection, spec):
             for plugin_name in get_plugins_from_collection(ns, coll, 'lookup', spec):
                 if plugin_name not in value:
                     continue
-                value = value.replace(plugin_name, get_plugin_fqcn(ns, coll, plugin_name))
+                new_plugin_name = get_plugin_fqcn(ns, coll, plugin_name)
+                if args.fail_on_core_rewrite:
+                    raise RuntimeError('Rewriting to %s' % new_plugin_name)
+                value = value.replace(plugin_name, new_plugin_name)
                 integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
     return value
@@ -1197,7 +1217,10 @@ def _rewrite_yaml_filter(value, namespace, collection, spec):
                 for found_filter in (match[5] for match in FILTER_RE.findall(value)):
                     if found_filter not in filters:
                         continue
-                    value = value.replace(found_filter, get_plugin_fqcn(ns, coll, found_filter))
+                    new_plugin_name = get_plugin_fqcn(ns, coll, found_filter)
+                    if args.fail_on_core_rewrite:
+                        raise RuntimeError('Rewriting to %s' % new_plugin_name)
+                    value = value.replace(found_filter, new_plugin_name)
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
     return value
@@ -1218,7 +1241,10 @@ def _rewrite_yaml_test(value, namespace, collection, spec):
                 for found_test in (match[5] for match in TEST_RE.findall(value)):
                     if found_test not in tests:
                         continue
-                    value = value.replace(found_test, get_plugin_fqcn(ns, coll, found_test))
+                    new_plugin_name = get_plugin_fqcn(ns, coll, found_filter)
+                    if args.fail_on_core_rewrite:
+                        raise RuntimeError('Rewriting to %s' % new_plugin_name)
+                    value = value.replace(found_test, new_plugin_name)
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
     return value
@@ -1252,7 +1278,7 @@ def main():
     parser.add_argument('-M', '--push-migrated-core', action='store_true', dest='push_migrated_core', default=False,
                         help='Push migrated core to the Git repo')
     parser.add_argument('-f', '--fail-on-core-rewrite', action='store_true', dest='fail_on_core_rewrite', default=False,
-                        help='Fail on core rewrite. E.g. to verify core does not depend on the collections by running migration against the list of files kept in core.')
+            help='Fail on core rewrite. E.g. to verify core does not depend on the collections by running migration against the list of files kept in core: spec must contain the "_core" collection.')
 
     args = parser.parse_args()
 
