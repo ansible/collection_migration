@@ -249,7 +249,7 @@ def rewrite_doc_fragments(mod_fst, collection, spec, namespace, args):
             fragment_collection = fragment_collection[1:]
 
         new_fragment = get_plugin_fqcn(fragment_namespace, fragment_collection, fragment)
-        if args.fail_on_rewrite:
+        if args.fail_on_core_rewrite:
             raise RuntimeError('Rewriting to %s' % new_fragment)
 
         # `doc_val` holds a baron representation of the string node
@@ -397,7 +397,7 @@ def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, arg
             # skip rewrite
             continue
 
-        if args.fail_on_rewrite:
+        if args.fail_on_core_rewrite:
             raise RuntimeError('Rewriting to %s.%s.%s' % (plugin_namespace, plugin_collection, plugin_name))
 
         if plugin_collection.startswith('_'):
@@ -585,7 +585,7 @@ def assemble_collections(spec, args):
     for namespace in spec.keys():
         for collection in spec[namespace].keys():
 
-            if args.fail_on_rewrite:
+            if args.fail_on_core_rewrite:
                 if collection != '_core':
                     continue
             else:
@@ -1251,8 +1251,8 @@ def main():
                         help='remove plugins from source instead of just copying them')
     parser.add_argument('-M', '--push-migrated-core', action='store_true', dest='push_migrated_core', default=False,
                         help='Push migrated core to the Git repo')
-    parser.add_argument('-f', '--fail-on-rewrite', action='store_true', dest='fail_on_rewrite', default=False,
-                        help='Fail on rewrite. E.g. to verify core does not depend on the collections by running migration against the list of files kept in core.')
+    parser.add_argument('-f', '--fail-on-core-rewrite', action='store_true', dest='fail_on_core_rewrite', default=False,
+                        help='Fail on core rewrite. E.g. to verify core does not depend on the collections by running migration against the list of files kept in core.')
 
     args = parser.parse_args()
 
