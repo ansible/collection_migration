@@ -208,7 +208,7 @@ def get_rewritable_collections(namespace, spec):
 
 
 # ===== REWRITE FUNCTIONS =====
-def rewrite_doc_fragments(mod_fst, collection, spec, namespace):
+def rewrite_doc_fragments(mod_fst, collection, spec, namespace, args):
     try:
         doc_val = (
             mod_fst.
@@ -249,6 +249,8 @@ def rewrite_doc_fragments(mod_fst, collection, spec, namespace):
             fragment_collection = fragment_collection[1:]
 
         new_fragment = get_plugin_fqcn(fragment_namespace, fragment_collection, fragment)
+        if args.fail_on_rewrite:
+            raise RuntimeError('Rewriting to %s' % new_fragment)
 
         # `doc_val` holds a baron representation of the string node
         # of type 'string' or 'raw_string'. Updating its `.value`
@@ -278,7 +280,7 @@ def rewrite_doc_fragments(mod_fst, collection, spec, namespace):
     return deps
 
 
-def rewrite_imports(mod_fst, collection, spec, namespace):
+def rewrite_imports(mod_fst, collection, spec, namespace, args):
     """Rewrite imports map."""
     plugins_path = ('ansible_collections', namespace, collection, 'plugins')
     tests_path = ('ansible_collections', namespace, collection, 'tests')
@@ -290,12 +292,21 @@ def rewrite_imports(mod_fst, collection, spec, namespace):
         ('units', ): unit_tests_path,
     }
 
-    return rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace)
+    return rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, args)
 
 
 def match_import_src(imp_src, import_map):
     """Find a replacement map entry matching the current import."""
-    imp_src_tuple = tuple(t.value for t in imp_src)
+    try:
+        imp_src_tuple = tuple(t.value for t in imp_src)
+    except AttributeError as e:
+        # FIXME
+        # AttributeError("EllipsisNode instance has no attribute 'value' and 'value' is not a valid identifier of another node")
+        # lib/ansible/modules/system/setup.py:
+        # from ...module_utils.basic import AnsibleModule
+        logger.exception(e)
+        raise LookupError
+
     for old_imp, new_imp in import_map.items():
         token_length = len(old_imp)
         if imp_src_tuple[:token_length] != old_imp:
@@ -305,7 +316,7 @@ def match_import_src(imp_src, import_map):
     raise LookupError(f"Couldn't find a replacement for {imp_src!s}")
 
 
-def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace):
+def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, args):
     """Replace imports in the python module FST."""
     deps = []
     for imp in mod_fst.find_all(('import', 'from_import')):
@@ -385,6 +396,9 @@ def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace):
         if plugin_collection in COLLECTION_SKIP_REWRITE:
             # skip rewrite
             continue
+
+        if args.fail_on_rewrite:
+            raise RuntimeError('Rewriting to %s.%s.%s' % (plugin_namespace, plugin_collection, plugin_name))
 
         if plugin_collection.startswith('_'):
             plugin_collection = plugin_collection[1:]
@@ -571,9 +585,13 @@ def assemble_collections(spec, args):
     for namespace in spec.keys():
         for collection in spec[namespace].keys():
 
-            if collection.startswith('_'):
-                # these are info only collections
-                continue
+            if args.fail_on_rewrite:
+                if collection != '_core':
+                    continue
+            else:
+                if collection.startswith('_'):
+                    # these are info only collections
+                    continue
 
             migrated_to_collection = {}
 
@@ -695,9 +713,9 @@ def assemble_collections(spec, args):
 
                     mod_src_text, mod_fst = read_module_txt_n_fst(src)
 
-                    import_dependencies = rewrite_imports(mod_fst, collection, spec, namespace)
+                    import_dependencies = rewrite_imports(mod_fst, collection, spec, namespace, args)
                     try:
-                        docs_dependencies = rewrite_doc_fragments(mod_fst, collection, spec, namespace)
+                        docs_dependencies = rewrite_doc_fragments(mod_fst, collection, spec, namespace, args)
                     except LookupError as err:
                         docs_dependencies = []
                         logger.info('%s in %s', err, src)
@@ -729,7 +747,7 @@ def assemble_collections(spec, args):
                     for dp, dn, fn in os.walk(os.path.join(collection_dir, 'tests', 'unit'))
             ):
                 _unit_test_module_src_text, unit_test_module_fst = read_module_txt_n_fst(file_path)
-                unit_deps += rewrite_imports(unit_test_module_fst, collection, spec, namespace)
+                unit_deps += rewrite_imports(unit_test_module_fst, collection, spec, namespace, args)
                 write_text_into_file(file_path, unit_test_module_fst.dumps())
 
             inject_gitignore_into_tests(collection_dir)
@@ -740,7 +758,7 @@ def assemble_collections(spec, args):
 
             # FIXME need to hack PyYAML to preserve formatting (not how much it's possible or how much it is work) or use e.g. ruamel.yaml
             try:
-                rewrite_integration_tests(integration_test_dirs, checkout_path, collection_dir, namespace, collection, spec)
+                rewrite_integration_tests(integration_test_dirs, checkout_path, collection_dir, namespace, collection, spec, args)
             except yaml.composer.ComposerError as e:
                 logger.error(e)
 
@@ -897,7 +915,7 @@ def poor_mans_integration_tests_discovery(checkout_dir, plugin_type, plugin_name
     return files
 
 
-def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace, collection, spec):
+def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace, collection, spec, args):
     # FIXME move to diff file
     # FIXME module_defaults groups
 
@@ -920,9 +938,9 @@ def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace
                     # FIXME duplicate code from the 'main' function
                     mod_src_text, mod_fst = read_module_txt_n_fst(full_path)
 
-                    import_dependencies = rewrite_imports(mod_fst, collection, spec, namespace)
+                    import_dependencies = rewrite_imports(mod_fst, collection, spec, namespace, args)
                     try:
-                        docs_dependencies = rewrite_doc_fragments(mod_fst, collection, spec, namespace)
+                        docs_dependencies = rewrite_doc_fragments(mod_fst, collection, spec, namespace, args)
                     except LookupError as err:
                         docs_dependencies = []
                         logger.info('%s in %s', err, full_path)
@@ -1233,6 +1251,8 @@ def main():
                         help='remove plugins from source instead of just copying them')
     parser.add_argument('-M', '--push-migrated-core', action='store_true', dest='push_migrated_core', default=False,
                         help='Push migrated core to the Git repo')
+    parser.add_argument('-f', '--fail-on-rewrite', action='store_true', dest='fail_on_rewrite', default=False,
+                        help='Fail on rewrite. E.g. to verify core does not depend on the collections by running migration against the list of files kept in core.')
 
     args = parser.parse_args()
 
