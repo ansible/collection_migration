@@ -21,7 +21,10 @@ from collections.abc import Mapping
 from importlib import import_module
 from string import Template
 
+from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.vars.reserved import is_reserved_name
+
 import logzero
 from logzero import logger
 
@@ -35,10 +38,15 @@ TEST_RE = re.compile(r'((.+?)\s*([\w \.\'"]+)(\s*)is(\s*)(\w+))')
 
 DEVEL_URL = 'https://github.com/ansible/ansible.git'
 DEVEL_BRANCH = 'devel'
+MIGRATED_DEVEL_URL = 'git@github.com:ansible/migratedcore.git'
+
 
 VARDIR = os.environ.get('GRAVITY_VAR_DIR', '.cache')
 COLLECTION_NAMESPACE = 'test_migrate_ns'
 PLUGIN_EXCEPTION_PATHS = {'modules': 'lib/ansible/modules', 'module_utils': 'lib/ansible/module_utils', 'lookups': 'lib/ansible/plugins/lookup'}
+
+
+COLLECTION_SKIP_REWRITE = ('_core',)
 
 
 RAW_STR_TMPL = "r'''{str_val}'''"
@@ -109,8 +117,18 @@ def read_yaml_file(path):
         return yaml.safe_load(yaml_file)
 
 
+def read_ansible_yaml_file(path):
+    with open(path, 'rb') as yaml_file:
+        return AnsibleLoader(yaml_file.read(), file_name=path).get_single_data()
+
+
 def write_yaml_into_file_as_is(path, data):
-    yaml_text = yaml.dump(data, default_flow_style=False, sort_keys=False)
+    yaml_text = yaml.dump(data, allow_unicode=True, default_flow_style=False, sort_keys=False)
+    write_text_into_file(path, yaml_text)
+
+
+def write_ansible_yaml_into_file_as_is(path, data):
+    yaml_text = yaml.dump(data, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=False, sort_keys=False)
     write_text_into_file(path, yaml_text)
 
 
@@ -185,6 +203,10 @@ def get_plugin_fqcn(namespace, collection, plugin_name):
     return '%s.%s.%s' % (namespace, collection, plugin_name)
 
 
+def get_rewritable_collections(namespace, spec):
+    return (collection for collection in spec[namespace].keys() if collection not in COLLECTION_SKIP_REWRITE)
+
+
 # ===== REWRITE FUNCTIONS =====
 def rewrite_doc_fragments(mod_fst, collection, spec, namespace):
     try:
@@ -219,7 +241,7 @@ def rewrite_doc_fragments(mod_fst, collection, spec, namespace):
             # plugin not in spec, assuming it stays in core and leaving as is
             continue
 
-        if fragment_collection == '_core':
+        if fragment_collection in COLLECTION_SKIP_REWRITE:
             # skip rewrite
             continue
 
@@ -334,12 +356,12 @@ def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace):
                     continue
         elif imp_src[1].value == 'modules':
             # in unit tests
-            # from ansible.modules.network.nxos import nxos_bgp
             plugin_type = 'modules'
             try:
+                # from ansible.modules.network.nxos import nxos_bgp
                 plugin_name = '/'.join([t.value for t in imp_src[token_length:]] + [imp.targets[0].value])
             except AttributeError:
-                # from import ansible.modules.cloud.amazon.aws_api_gateway as agw
+                # import ansible.modules.cloud.amazon.aws_api_gateway as agw
                 plugin_name = '/'.join(t.value for t in imp_src[token_length:])
         else:
             raise Exception('BUG: Could not process import: ' + str(imp))
@@ -347,10 +369,20 @@ def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace):
         try:
             plugin_namespace, plugin_collection = get_plugin_collection(plugin_name, plugin_type, spec)
         except LookupError as e:
-            # plugin not in spec, assuming it stays in core and skipping
-            continue
+            if plugin_type != 'modules':
+                # plugin not in spec, assuming it stays in core and skipping
+                continue
 
-        if plugin_collection == '_core':
+            # from ansible.modules.cloud.amazon.aws_netapp_cvs_FileSystems import AwsCvsNetappFileSystem as fileSystem_module
+            # in this case aws_netapp_cvs_FileSystems is the module, not AwsCvsNetappFileSystem
+            try:
+                plugin_name = '/'.join(plugin_name.split('/')[:-1])
+                plugin_namespace, plugin_collection = get_plugin_collection(plugin_name, plugin_type, spec)
+            except LookupError as e:
+                # plugin not in spec, assuming it stays in core and skipping
+                continue
+
+        if plugin_collection in COLLECTION_SKIP_REWRITE:
             # skip rewrite
             continue
 
@@ -771,6 +803,20 @@ def publish_to_github(collections_target_dir, spec):
         )
 
 
+def push_migrated_core(vardir):
+    releases_dir = os.path.join(vardir, 'releases')
+    devel_path = os.path.join(releases_dir, 'migrated_core.git')
+
+    if not os.path.exists(devel_path):
+        subprocess.check_call(('git', 'clone', MIGRATED_DEVEL_URL, 'migrated_core.git'), cwd=releases_dir)
+    else:
+        subprocess.check_call(('git', 'checkout', DEVEL_BRANCH), cwd=devel_path)
+        subprocess.check_call(('git', 'pull', '--rebase'), cwd=devel_path)
+
+    # NOTE assumes the repo is not used and/or is locked while migration is running
+    subprocess.check_call(('git', 'push', '--force', 'origin', DEVEL_BRANCH), cwd=devel_path)
+
+
 def mark_moved_resources(checkout_dir, namespace, collection, migrated_to_collection):
     """Mark migrated paths in botmeta."""
     migrated_to = '.'.join((namespace, collection))
@@ -882,7 +928,7 @@ def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace
                         logger.info('%s in %s', err, full_path)
                     plugin_data_new = mod_fst.dumps()
 
-                    for dep_ns, deps_coll in docs_dependencies + import_dependencies:
+                    for dep_ns, dep_coll in docs_dependencies + import_dependencies:
                         integration_tests_add_to_deps((namespace, collection), (dep_ns, dep_coll))
 
                     write_text_into_file(dest, plugin_data_new)
@@ -918,7 +964,7 @@ def rewrite_sh(full_path, dest, namespace, collection, spec):
         if not contents.find(key):
             continue
         for ns in spec.keys():
-            for coll in spec[ns].keys():
+            for coll in get_rewritable_collections(ns, spec):
                 plugins = get_plugins_from_collection(ns, coll, plugin_type, spec)
                 for plugin_name in plugins:
                     if not contents.find(plugin_name):
@@ -971,6 +1017,8 @@ def rewrite_ini_section(config, key_map, section, namespace, collection, spec):
         for plugin_name in plugin_names:
             try:
                 plugin_namespace, plugin_collection = get_plugin_collection(plugin_name, plugin_type, spec)
+                if plugin_collection in COLLECTION_SKIP_REWRITE:
+                    raise LookupError
                 new_plugin_names.append(get_plugin_fqcn(namespace, plugin_collection, plugin_name))
                 integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
             except LookupError:
@@ -980,9 +1028,9 @@ def rewrite_ini_section(config, key_map, section, namespace, collection, spec):
 
 
 def rewrite_yaml(src, dest, namespace, collection, spec):
-    contents = read_yaml_file(src)
+    contents = read_ansible_yaml_file(src)
     _rewrite_yaml(contents, namespace, collection, spec)
-    write_yaml_into_file_as_is(dest, contents)
+    write_ansible_yaml_into_file_as_is(dest, contents)
 
 
 def _rewrite_yaml(contents, namespace, collection, spec):
@@ -1028,13 +1076,14 @@ def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec):
             plugin_name = key[prefix_len:]
             try:
                 plugin_namespace, plugin_collection = get_plugin_collection(plugin_name, 'lookup', spec)
-                translate.append((prefix + get_plugin_fqcn(namespace, plugin_collection, plugin_name), key))
-                integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
+                if plugin_collection not in COLLECTION_SKIP_REWRITE:
+                    translate.append((prefix + get_plugin_fqcn(namespace, plugin_collection, plugin_name), key))
+                    integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
             except LookupError:
                 pass
 
         for ns in spec.keys():
-            for coll in spec[ns].keys():
+            for coll in get_rewritable_collections(ns, spec):
                 try:
                     modules_in_collection = get_plugins_from_collection(ns, coll, 'modules', spec)
                 except LookupError:
@@ -1062,6 +1111,8 @@ def _rewrite_yaml_mapping_keys(el, namespace, collection, spec):
 
         try:
             plugin_namespace, plugin_collection = get_plugin_collection(el[key], plugin_type, spec)
+            if plugin_collection in COLLECTION_SKIP_REWRITE:
+                continue
             el[key] = get_plugin_fqcn(namespace, plugin_collection, el[key])
             integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
         except LookupError:
@@ -1083,7 +1134,7 @@ def _rewrite_yaml_mapping_values(el, namespace, collection, spec):
                 else:
                     if key == 'module_blacklist':
                         for ns in spec.keys():
-                            for coll in spec[ns].keys():
+                            for coll in get_rewritable_collections(ns, spec):
                                 if item in get_plugins_from_collection(ns, coll, 'modules', spec):
                                     el[key][idx] = get_plugin_fqcn(ns, coll, el[key][idx])
                                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
@@ -1103,7 +1154,7 @@ def _rewrite_yaml_lookup(value, namespace, collection, spec):
         return value
 
     for ns in spec.keys():
-        for coll in spec[ns].keys():
+        for coll in get_rewritable_collections(ns, spec):
             for plugin_name in get_plugins_from_collection(ns, coll, 'lookup', spec):
                 if plugin_name not in value:
                     continue
@@ -1117,7 +1168,7 @@ def _rewrite_yaml_filter(value, namespace, collection, spec):
     if '|' not in value:
         return value
     for ns in spec.keys():
-        for coll in spec[ns].keys():
+        for coll in get_rewritable_collections(ns, spec):
             for filter_plugin_name in get_plugins_from_collection(ns, coll, 'filter', spec):
                 imported_module = import_module('ansible.plugins.filter.' + filter_plugin_name)
                 fm = getattr(imported_module, 'FilterModule', None)
@@ -1138,7 +1189,7 @@ def _rewrite_yaml_test(value, namespace, collection, spec):
     if ' is ' not in value:
         return value
     for ns in spec.keys():
-        for coll in spec[ns].keys():
+        for coll in get_rewritable_collections(ns, spec):
             for test_plugin_name in get_plugins_from_collection(ns, coll, 'test', spec):
                 imported_module = import_module('ansible.plugins.test.' + test_plugin_name)
                 tm = getattr(imported_module, 'TestModule', None)
@@ -1176,10 +1227,12 @@ def main():
         action='store_true',
         dest='publish_to_github',
         default=False,
-        help='preserve module subdirs per spec',
+        help='Push all migrated collections to their Git remotes'
     )
     parser.add_argument('-m', '--move-plugins', action='store_true', dest='move_plugins', default=False,
                         help='remove plugins from source instead of just copying them')
+    parser.add_argument('-M', '--push-migrated-core', action='store_true', dest='push_migrated_core', default=False,
+                        help='Push migrated core to the Git repo')
 
     args = parser.parse_args()
 
@@ -1200,6 +1253,9 @@ def main():
 
     if args.publish_to_github:
         publish_to_github(args.vardir, spec)
+
+    if args.push_migrated_core:
+        push_migrated_core(args.vardir)
 
     global core
     print('======= Assumed stayed in core =======\n')
