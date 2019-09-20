@@ -484,8 +484,8 @@ def inject_ignore_into_sanity_tests(
 def inject_requirements_into_unit_tests(checkout_path, collection_dir):
     """Inject unit tests dependencies into collection."""
     coll_unit_tests_dir = os.path.join(collection_dir, 'tests', 'unit')
-    original_unit_tests_req_file = (
-        os.path.join(checkout_path, 'test', 'unit', 'requirements.txt')
+    original_unit_tests_req_file = os.path.join(
+        checkout_path, 'test', 'units', 'requirements.txt',
     )
 
     os.makedirs(coll_unit_tests_dir, exist_ok=True)
