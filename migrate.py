@@ -491,7 +491,10 @@ def inject_requirements_into_integration_tests(checkout_path, collection_dir):
     )
 
     os.makedirs(coll_integration_tests_dir, exist_ok=True)
-    shutil.copy(original_integration_tests_req_file, coll_unit_tests_dir)
+    shutil.copy(
+        original_integration_tests_req_file,
+        coll_integration_tests_dir,
+    )
 
     logger.info('Integration tests deps injected into collection')
 
