@@ -815,9 +815,17 @@ def publish_to_github(collections_target_dir, spec, *, gh_org, gh_app_id, gh_app
     )
     github_api = GitHubOrgClient(gh_app_id, gh_app_key_path, gh_org)
     for collection_dir, repo_name in collection_paths_except_core:
-        git_repo_write_uri = github_api.get_git_repo_write_uri(repo_name)
+        git_repo_url = read_yaml_file(
+            os.path.join(collection_dir, 'galaxy.yml'),
+        )['repository']
+        with contextlib.suppress(LookupError):
+            git_repo_url = github_api.get_git_repo_write_uri(repo_name)
+        logger.debug(
+            'Using %s...%s Git URL for push',
+            git_repo_url[:5], git_repo_url[-5:],
+        )
         subprocess.check_call(
-            ('git', 'push', '--force', git_repo_write_uri, 'HEAD:master'),
+            ('git', 'push', '--force', git_repo_url, 'HEAD:master'),
             cwd=collection_dir,
         )
 

@@ -38,7 +38,12 @@ class GitHubOrgClient:
     async def _get_github_client(self):
         """Return a GitHub API client for the target org."""
         github_app = self._get_github_app()
-        github_app_installations = await github_app.get_installations()
+        try:
+            github_app_installations = await github_app.get_installations()
+        except gidgethub.BadRequest:
+            error_msg = 'Invalid GitHub App credentials'
+            logger.error(error_msg)
+            raise LookupError(error_msg)
         target_github_app_installation = next(  # find the one
             (
                 i for n, i in github_app_installations.items()
