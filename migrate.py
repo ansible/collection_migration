@@ -235,6 +235,11 @@ def write_text_into_file(path, text):
         return f.write(text)
 
 
+def write_fst_into_file(path, fst):
+    """Dump fst into the given file path."""
+    write_text_into_file(path, fst.dumps().rstrip() + '\n')
+
+
 def render_fst(fst):
     """Render FST node in color when in terminal."""
     node_txt = str(fst)
@@ -845,13 +850,13 @@ def fst_rewrite_session(src_path, dst_path):
 
     yield mod_fst
 
-    new_mod_src_text = mod_fst.dumps()
+    new_mod_src_text = mod_fst.dumps().rstrip() + '\n'
 
     if src_path == dst_path and mod_src_text == new_mod_src_text:
         return
 
     logger.info('Rewriting plugin references in %s', dst_path)
-    write_text_into_file(dst_path, new_mod_src_text)
+    write_fst_into_file(dst_path, mod_fst)
 
 
 def read_module_txt_n_fst(path):
