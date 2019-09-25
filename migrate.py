@@ -235,6 +235,21 @@ def write_text_into_file(path, text):
         return f.write(text)
 
 
+def render_fst(fst):
+    """Render FST node in color when in terminal."""
+    node_txt = str(fst)
+    if not sys.stdout.isatty() or redbaron.runned_from_ipython():
+        # It doesn't make sense to highlight non-tty output
+        # And also redbaron applies it by itself when under ipython
+        return node_txt
+    return redbaron.python_highlight(node_txt).decode()
+
+
+def get_fst_line_length(fst):
+    """Calculate the absolute line length of the given node."""
+    return fst.absolute_bounding_box.bottom_right.column
+
+
 @contextlib.contextmanager
 def working_directory(target_dir):
     """Temporary change dir to the target and change back on exit."""
@@ -728,7 +743,80 @@ def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, arg
             imp_src[2] = plugin_collection
             deps.append((plugin_namespace, plugin_collection))
 
+        respect_line_length(imp, max_chars=160)
+
     return deps
+
+
+def respect_line_length(import_node, *, max_chars=79):
+    """Split the import node into multiple if it's too long."""
+    parent_node = import_node.parent
+    replacement_position = slice(
+        import_node.index_on_parent,
+        import_node.index_on_parent + 1,
+    )
+
+    line_length = get_fst_line_length(import_node)
+
+    is_too_long = line_length > max_chars
+    if not is_too_long:
+        return
+
+    if import_node.type != 'from_import':
+        logger.warning(
+            '%s-char long line `%s` is too long. '
+            'It exceeds the limit of %s chars. '
+            'However, shrinking is not yet implemented for %s nodes. '
+            'Skipping...',
+            line_length,
+            render_fst(import_node),
+            max_chars,
+            import_node.type,
+        )
+        return
+
+    import_targets = import_node.targets
+    targets_amount = len(import_targets)
+    if targets_amount < 2:
+        logger.warning(
+            '%s-char long line `%s` is too long. '
+            'It exceeds the limit of %s chars. '
+            'However, it only imports %s target(s) '
+            'and will not be rewritten therefore. Skipping...',
+            line_length,
+            render_fst(import_node),
+            max_chars,
+            targets_amount,
+        )
+        return
+
+    logger.info(
+        '%s-char long line `%s` is too long. '
+        'It exceeds the limit of %s chars. '
+        'Rewriting it with multiple imports...',
+        line_length,
+        render_fst(import_node),
+        max_chars,
+    )
+
+    replacement_import_nodes = [
+        import_node.copy() for _ in import_targets
+    ]
+    for node, target in zip(replacement_import_nodes, import_targets):
+        node.targets = target
+    parent_node[replacement_position] = replacement_import_nodes
+
+    for node in replacement_import_nodes:
+        line_length = get_fst_line_length(node)
+        is_too_long = line_length > max_chars
+        if is_too_long:
+            logger.warning(
+                '%s-char long line `%s` is too long. '
+                'It exceeds the limit of %s chars.',
+                line_length,
+                render_fst(node),
+                max_chars,
+            )
 
 
 def rewrite_py(src, dest, collection, spec, namespace, args):
