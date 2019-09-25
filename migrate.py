@@ -56,7 +56,7 @@ STR_TMPL = "'''{str_val}'''"
 
 
 os.makedirs(VARDIR, exist_ok=True)
-logzero.logfile(os.path.join(VARDIR, 'errors.log'), loglevel=logging.ERROR)
+logzero.logfile(os.path.join(VARDIR, 'errors.log'), loglevel=logging.WARNING)
 
 
 core = {}
@@ -494,6 +494,21 @@ def inject_requirements_into_unit_tests(checkout_path, collection_dir):
     logger.info('Unit tests deps injected into collection')
 
 
+def inject_requirements_into_integration_tests(checkout_path, collection_dir):
+    """Inject integration tests Python dependencies into collection."""
+    coll_integration_tests_dir = os.path.join(
+        collection_dir, 'tests', 'integration',
+    )
+    original_integration_tests_req_file = os.path.join(
+        checkout_path, 'test', 'integration', 'requirements.txt',
+    )
+
+    if os.path.exists(original_integration_tests_req_file):
+        os.makedirs(coll_integration_tests_dir, exist_ok=True)
+        shutil.copy( original_integration_tests_req_file, coll_integration_tests_dir)
+        logger.info('Integration tests deps injected into collection')
+
+
 def copy_unit_tests(checkout_path, collection_dir, plugin_type, plugin, spec):
     """Find all unit tests and related artifacts for the given plugin.
 
@@ -516,15 +531,15 @@ def copy_unit_tests(checkout_path, collection_dir, plugin_type, plugin, spec):
     # Narrow down the search area
     type_base_subdir = os.path.join(unit_tests_root, type_subdir)
 
+    # Figure out what to copy and where
+    copy_map = defaultdict(lambda: defaultdict(set))
+
     # Find all test modules with the same ending as the current plugin
     plugin_dir, plugin_mod = os.path.split(plugin)
     matching_test_modules = glob.glob(os.path.join(type_base_subdir, plugin_dir, f'*{plugin_mod}'))
     if not matching_test_modules:
         logger.info('No tests matching %s/%s found', plugin_type, plugin)
-        return
-
-    # Figure out what to copy and where
-    copy_map = defaultdict(lambda: defaultdict(set))
+        return copy_map
 
     # Inject unit test helper packages
     copy_map[unit_tests_root]['to'] = collection_unit_tests_root
@@ -785,6 +800,8 @@ def assemble_collections(spec, args, target_github_org):
                 dep = '%s.%s' % (dep_ns, dep_coll)
                 # FIXME hardcoded version
                 galaxy_metadata['dependencies'][dep] = '>=1.0'
+
+            inject_requirements_into_integration_tests(checkout_path, collection_dir)
 
             integration_test_dirs = []
             integration_tests_deps = set()
