@@ -31,6 +31,8 @@ from logzero import logger
 from baron.parser import ParsingError
 import redbaron
 
+from gh import GitHubOrgClient
+
 
 # https://github.com/ansible/ansible/blob/100fe52860f45238ee8ca9e3019d1129ad043c68/hacking/fix_test_syntax.py#L62
 FILTER_RE = re.compile(r'((.+?)\s*([\w \.\'"]+)(\s*)\|(\s*)(\w+))')
@@ -54,7 +56,7 @@ STR_TMPL = "'''{str_val}'''"
 
 
 os.makedirs(VARDIR, exist_ok=True)
-logzero.logfile(os.path.join(VARDIR, 'errors.log'), loglevel=logging.ERROR)
+logzero.logfile(os.path.join(VARDIR, 'errors.log'), loglevel=logging.WARNING)
 
 
 core = {}
@@ -208,7 +210,7 @@ def get_rewritable_collections(namespace, spec):
 
 
 # ===== REWRITE FUNCTIONS =====
-def rewrite_doc_fragments(mod_fst, collection, spec, namespace):
+def rewrite_doc_fragments(mod_fst, collection, spec, namespace, args):
     try:
         doc_val = (
             mod_fst.
@@ -249,6 +251,8 @@ def rewrite_doc_fragments(mod_fst, collection, spec, namespace):
             fragment_collection = fragment_collection[1:]
 
         new_fragment = get_plugin_fqcn(fragment_namespace, fragment_collection, fragment)
+        if args.fail_on_core_rewrite:
+            raise RuntimeError('Rewriting to %s' % new_fragment)
 
         # `doc_val` holds a baron representation of the string node
         # of type 'string' or 'raw_string'. Updating its `.value`
@@ -278,7 +282,7 @@ def rewrite_doc_fragments(mod_fst, collection, spec, namespace):
     return deps
 
 
-def rewrite_imports(mod_fst, collection, spec, namespace):
+def rewrite_imports(mod_fst, collection, spec, namespace, args):
     """Rewrite imports map."""
     plugins_path = ('ansible_collections', namespace, collection, 'plugins')
     tests_path = ('ansible_collections', namespace, collection, 'tests')
@@ -290,12 +294,21 @@ def rewrite_imports(mod_fst, collection, spec, namespace):
         ('units', ): unit_tests_path,
     }
 
-    return rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace)
+    return rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, args)
 
 
 def match_import_src(imp_src, import_map):
     """Find a replacement map entry matching the current import."""
-    imp_src_tuple = tuple(t.value for t in imp_src)
+    try:
+        imp_src_tuple = tuple(t.value for t in imp_src)
+    except AttributeError as e:
+        # FIXME
+        # AttributeError("EllipsisNode instance has no attribute 'value' and 'value' is not a valid identifier of another node")
+        # lib/ansible/modules/system/setup.py:
+        # from ...module_utils.basic import AnsibleModule
+        logger.exception(e)
+        raise LookupError
+
     for old_imp, new_imp in import_map.items():
         token_length = len(old_imp)
         if imp_src_tuple[:token_length] != old_imp:
@@ -305,7 +318,7 @@ def match_import_src(imp_src, import_map):
     raise LookupError(f"Couldn't find a replacement for {imp_src!s}")
 
 
-def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace):
+def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, args):
     """Replace imports in the python module FST."""
     deps = []
     for imp in mod_fst.find_all(('import', 'from_import')):
@@ -386,6 +399,9 @@ def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace):
             # skip rewrite
             continue
 
+        if args.fail_on_core_rewrite:
+            raise RuntimeError('Rewriting to %s.%s.%s' % (plugin_namespace, plugin_collection, plugin_name))
+
         if plugin_collection.startswith('_'):
             plugin_collection = plugin_collection[1:]
 
@@ -465,6 +481,21 @@ def inject_ignore_into_sanity_tests(
     )
 
 
+def inject_requirements_into_integration_tests(checkout_path, collection_dir):
+    """Inject integration tests Python dependencies into collection."""
+    coll_integration_tests_dir = os.path.join(
+        collection_dir, 'tests', 'integration',
+    )
+    original_integration_tests_req_file = os.path.join(
+        checkout_path, 'test', 'integration', 'requirements.txt',
+    )
+
+    if os.path.exists(original_integration_tests_req_file):
+        os.makedirs(coll_integration_tests_dir, exist_ok=True)
+        shutil.copy( original_integration_tests_req_file, coll_integration_tests_dir)
+        logger.info('Integration tests deps injected into collection')
+
+
 def copy_unit_tests(checkout_path, collection_dir, plugin_type, plugin, spec):
     """Find all unit tests and related artifacts for the given plugin.
 
@@ -487,15 +518,15 @@ def copy_unit_tests(checkout_path, collection_dir, plugin_type, plugin, spec):
     # Narrow down the search area
     type_base_subdir = os.path.join(unit_tests_root, type_subdir)
 
+    # Figure out what to copy and where
+    copy_map = defaultdict(lambda: defaultdict(set))
+
     # Find all test modules with the same ending as the current plugin
     plugin_dir, plugin_mod = os.path.split(plugin)
     matching_test_modules = glob.glob(os.path.join(type_base_subdir, plugin_dir, f'*{plugin_mod}'))
     if not matching_test_modules:
         logger.info('No tests matching %s/%s found', plugin_type, plugin)
-        return
-
-    # Figure out what to copy and where
-    copy_map = defaultdict(lambda: defaultdict(set))
+        return copy_map
 
     # Inject unit test helper packages
     copy_map[unit_tests_root]['to'] = collection_unit_tests_root
@@ -549,7 +580,7 @@ def copy_unit_tests(checkout_path, collection_dir, plugin_type, plugin, spec):
 
 
 # ===== MAKE COLLECTIONS =====
-def assemble_collections(spec, args):
+def assemble_collections(spec, args, target_github_org):
     # NOTE releases_dir is already created by checkout_repo(), might want to move all that to something like ensure_dirs() ...
     releases_dir = os.path.join(args.vardir, 'releases')
     checkout_path = os.path.join(releases_dir, f'{DEVEL_BRANCH}.git')
@@ -571,9 +602,13 @@ def assemble_collections(spec, args):
     for namespace in spec.keys():
         for collection in spec[namespace].keys():
 
-            if collection.startswith('_'):
-                # these are info only collections
-                continue
+            if args.fail_on_core_rewrite:
+                if collection != '_core':
+                    continue
+            else:
+                if collection.startswith('_'):
+                    # these are info only collections
+                    continue
 
             migrated_to_collection = {}
 
@@ -597,7 +632,7 @@ def assemble_collections(spec, args):
                 'license_file': None,
                 'tags': None,
                 'dependencies': {},
-                'repository': f'git@github.com:ansible-collections/{namespace}.{collection}.git',
+                'repository': f'git@github.com:{target_github_org}/{namespace}.{collection}.git',
                 'documentation': None,
                 'homepage': None,
                 'issues': None
@@ -695,9 +730,9 @@ def assemble_collections(spec, args):
 
                     mod_src_text, mod_fst = read_module_txt_n_fst(src)
 
-                    import_dependencies = rewrite_imports(mod_fst, collection, spec, namespace)
+                    import_dependencies = rewrite_imports(mod_fst, collection, spec, namespace, args)
                     try:
-                        docs_dependencies = rewrite_doc_fragments(mod_fst, collection, spec, namespace)
+                        docs_dependencies = rewrite_doc_fragments(mod_fst, collection, spec, namespace, args)
                     except LookupError as err:
                         docs_dependencies = []
                         logger.info('%s in %s', err, src)
@@ -729,7 +764,7 @@ def assemble_collections(spec, args):
                     for dp, dn, fn in os.walk(os.path.join(collection_dir, 'tests', 'unit'))
             ):
                 _unit_test_module_src_text, unit_test_module_fst = read_module_txt_n_fst(file_path)
-                unit_deps += rewrite_imports(unit_test_module_fst, collection, spec, namespace)
+                unit_deps += rewrite_imports(unit_test_module_fst, collection, spec, namespace, args)
                 write_text_into_file(file_path, unit_test_module_fst.dumps())
 
             inject_gitignore_into_tests(collection_dir)
@@ -740,7 +775,7 @@ def assemble_collections(spec, args):
 
             # FIXME need to hack PyYAML to preserve formatting (not how much it's possible or how much it is work) or use e.g. ruamel.yaml
             try:
-                rewrite_integration_tests(integration_test_dirs, checkout_path, collection_dir, namespace, collection, spec)
+                rewrite_integration_tests(integration_test_dirs, checkout_path, collection_dir, namespace, collection, spec, args)
             except yaml.composer.ComposerError as e:
                 logger.error(e)
 
@@ -750,6 +785,8 @@ def assemble_collections(spec, args):
                 dep = '%s.%s' % (dep_ns, dep_coll)
                 # FIXME hardcoded version
                 galaxy_metadata['dependencies'][dep] = '>=1.0'
+
+            inject_requirements_into_integration_tests(checkout_path, collection_dir)
 
             integration_test_dirs = []
             integration_tests_deps = set()
@@ -780,7 +817,7 @@ def assemble_collections(spec, args):
             REMOVE = set()
 
 
-def publish_to_github(collections_target_dir, spec):
+def publish_to_github(collections_target_dir, spec, *, gh_org, gh_app_id, gh_app_key_path):
     """Push all migrated collections to their Git remotes."""
     collections_base_dir = os.path.join(collections_target_dir, 'collections')
     collections_root_dir = os.path.join(
@@ -788,15 +825,22 @@ def publish_to_github(collections_target_dir, spec):
         'ansible_collections',
     )
     collection_paths_except_core = (
-        os.path.join(collections_root_dir, ns, coll)
+        (os.path.join(collections_root_dir, ns, coll), f'{ns}.{coll}')
         for ns, ns_val in spec.items()
         for coll in ns_val.keys()
         if not coll.startswith('_')
     )
-    for collection_dir in collection_paths_except_core:
+    github_api = GitHubOrgClient(gh_app_id, gh_app_key_path, gh_org)
+    for collection_dir, repo_name in collection_paths_except_core:
         git_repo_url = read_yaml_file(
             os.path.join(collection_dir, 'galaxy.yml'),
         )['repository']
+        with contextlib.suppress(LookupError):
+            git_repo_url = github_api.get_git_repo_write_uri(repo_name)
+        logger.debug(
+            'Using %s...%s Git URL for push',
+            git_repo_url[:5], git_repo_url[-5:],
+        )
         subprocess.check_call(
             ('git', 'push', '--force', git_repo_url, 'HEAD:master'),
             cwd=collection_dir,
@@ -897,7 +941,7 @@ def poor_mans_integration_tests_discovery(checkout_dir, plugin_type, plugin_name
     return files
 
 
-def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace, collection, spec):
+def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace, collection, spec, args):
     # FIXME move to diff file
     # FIXME module_defaults groups
 
@@ -920,9 +964,9 @@ def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace
                     # FIXME duplicate code from the 'main' function
                     mod_src_text, mod_fst = read_module_txt_n_fst(full_path)
 
-                    import_dependencies = rewrite_imports(mod_fst, collection, spec, namespace)
+                    import_dependencies = rewrite_imports(mod_fst, collection, spec, namespace, args)
                     try:
-                        docs_dependencies = rewrite_doc_fragments(mod_fst, collection, spec, namespace)
+                        docs_dependencies = rewrite_doc_fragments(mod_fst, collection, spec, namespace, args)
                     except LookupError as err:
                         docs_dependencies = []
                         logger.info('%s in %s', err, full_path)
@@ -936,18 +980,18 @@ def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace
                     # FIXME
                     pass
                 elif ext in ('.yml', '.yaml'):
-                    rewrite_yaml(full_path, dest, namespace, collection, spec)
+                    rewrite_yaml(full_path, dest, namespace, collection, spec, args)
                 elif ext in ('.sh',):
-                    rewrite_sh(full_path, dest, namespace, collection, spec)
+                    rewrite_sh(full_path, dest, namespace, collection, spec, args)
                 elif filename == 'ansible.cfg':
-                    rewrite_ini(full_path, dest, namespace, collection, spec)
+                    rewrite_ini(full_path, dest, namespace, collection, spec, args)
                 else:
                     shutil.copy2(full_path, dest)
 
                 remove(full_path)
 
 
-def rewrite_sh(full_path, dest, namespace, collection, spec):
+def rewrite_sh(full_path, dest, namespace, collection, spec, args):
     sh_key_map = {
         'ANSIBLE_CACHE_PLUGIN': 'cache',
         'ANSIBLE_CALLBACK_WHITELIST': 'callback',
@@ -971,6 +1015,9 @@ def rewrite_sh(full_path, dest, namespace, collection, spec):
                         continue
                     # FIXME list
                     new_plugin_name = get_plugin_fqcn(ns, coll, plugin_name)
+
+                    if args.fail_on_core_rewrite:
+                        raise RuntimeError('Rewriting to %s' % new_plugin_name)
                     contents = contents.replace(key + '=' + plugin_name, key + '=' + new_plugin_name)
                     contents = contents.replace(key + ' ' + plugin_name, key + ' ' + new_plugin_name)
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
@@ -979,7 +1026,7 @@ def rewrite_sh(full_path, dest, namespace, collection, spec):
     shutil.copystat(full_path, dest)
 
 
-def rewrite_ini(src, dest, namespace, collection, spec):
+def rewrite_ini(src, dest, namespace, collection, spec, args):
     ini_key_map = {
         'defaults': {
             'callback_whitelist': 'callback',
@@ -997,7 +1044,7 @@ def rewrite_ini(src, dest, namespace, collection, spec):
     config.read(src)
     for section in config.sections():
         try:
-            rewrite_ini_section(config, ini_key_map, section, namespace, collection, spec)
+            rewrite_ini_section(config, ini_key_map, section, namespace, collection, spec, args)
         except KeyError:
             continue
 
@@ -1005,7 +1052,7 @@ def rewrite_ini(src, dest, namespace, collection, spec):
         config.write(cf)
 
 
-def rewrite_ini_section(config, key_map, section, namespace, collection, spec):
+def rewrite_ini_section(config, key_map, section, namespace, collection, spec, args):
     for keyword, plugin_type in key_map[section].items():
         try:
             # FIXME diff input format than csv?
@@ -1019,6 +1066,8 @@ def rewrite_ini_section(config, key_map, section, namespace, collection, spec):
                 plugin_namespace, plugin_collection = get_plugin_collection(plugin_name, plugin_type, spec)
                 if plugin_collection in COLLECTION_SKIP_REWRITE:
                     raise LookupError
+                if args.fail_on_core_rewrite:
+                    raise RuntimeError('Rewriting to %s.%s.%s' % (plugin_namespace, plugin_collection, plugin_name))
                 new_plugin_names.append(get_plugin_fqcn(namespace, plugin_collection, plugin_name))
                 integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
             except LookupError:
@@ -1027,26 +1076,29 @@ def rewrite_ini_section(config, key_map, section, namespace, collection, spec):
         config.set(section, keyword, ','.join(new_plugin_names))
 
 
-def rewrite_yaml(src, dest, namespace, collection, spec):
-    contents = read_ansible_yaml_file(src)
-    _rewrite_yaml(contents, namespace, collection, spec)
-    write_ansible_yaml_into_file_as_is(dest, contents)
+def rewrite_yaml(src, dest, namespace, collection, spec, args):
+    try:
+        contents = read_ansible_yaml_file(src)
+        _rewrite_yaml(contents, namespace, collection, spec, args)
+        write_ansible_yaml_into_file_as_is(dest, contents)
+    except Exception as e:
+        logger.error('Skipping bad YAML in %s: %s' % (src, str(e)))
 
 
-def _rewrite_yaml(contents, namespace, collection, spec):
+def _rewrite_yaml(contents, namespace, collection, spec, args):
     if isinstance(contents, list):
         for el in contents:
-            _rewrite_yaml(el, namespace, collection, spec)
+            _rewrite_yaml(el, namespace, collection, spec, args)
     elif isinstance(contents, Mapping):
-        _rewrite_yaml_mapping(contents, namespace, collection, spec)
+        _rewrite_yaml_mapping(contents, namespace, collection, spec, args)
 
 
-def _rewrite_yaml_mapping(el, namespace, collection, spec):
+def _rewrite_yaml_mapping(el, namespace, collection, spec, args):
     assert isinstance(el, Mapping)
 
-    _rewrite_yaml_mapping_keys(el, namespace, collection, spec)
-    _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec)
-    _rewrite_yaml_mapping_values(el, namespace, collection, spec)
+    _rewrite_yaml_mapping_keys(el, namespace, collection, spec, args)
+    _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args)
+    _rewrite_yaml_mapping_values(el, namespace, collection, spec, args)
 
 
 KEYWORD_TO_PLUGIN_MAP = {
@@ -1061,7 +1113,7 @@ KEYWORD_TO_PLUGIN_MAP = {
 }
 
 
-def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec):
+def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args):
     translate = []
     for key in el.keys():
         if is_reserved_name(key):
@@ -1076,9 +1128,13 @@ def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec):
             plugin_name = key[prefix_len:]
             try:
                 plugin_namespace, plugin_collection = get_plugin_collection(plugin_name, 'lookup', spec)
-                if plugin_collection not in COLLECTION_SKIP_REWRITE:
-                    translate.append((prefix + get_plugin_fqcn(namespace, plugin_collection, plugin_name), key))
-                    integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
+                if plugin_collection in COLLECTION_SKIP_REWRITE:
+                    raise LookupError
+
+                if args.fail_on_core_rewrite:
+                    raise RuntimeError('Rewriting to %s.%s.%s' % (plugin_namespace, plugin_collection, plugin_name))
+                translate.append((prefix + get_plugin_fqcn(namespace, plugin_collection, plugin_name), key))
+                integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
             except LookupError:
                 pass
 
@@ -1093,6 +1149,8 @@ def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec):
                     if key != module:
                         continue
                     new_module_name = get_plugin_fqcn(ns, coll, key)
+                    if args.fail_on_core_rewrite:
+                        raise RuntimeError('Rewriting to %s' % new_module_name)
                     translate.append((new_module_name, key))
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
@@ -1100,7 +1158,7 @@ def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec):
         el[new_key] = el.pop(old_key)
 
 
-def _rewrite_yaml_mapping_keys(el, namespace, collection, spec):
+def _rewrite_yaml_mapping_keys(el, namespace, collection, spec, args):
     for key in el.keys():
         if is_reserved_name(key):
             continue
@@ -1113,43 +1171,49 @@ def _rewrite_yaml_mapping_keys(el, namespace, collection, spec):
             plugin_namespace, plugin_collection = get_plugin_collection(el[key], plugin_type, spec)
             if plugin_collection in COLLECTION_SKIP_REWRITE:
                 continue
-            el[key] = get_plugin_fqcn(namespace, plugin_collection, el[key])
+            new_plugin_name = get_plugin_fqcn(namespace, plugin_collection, el[key])
+            if args.fail_on_core_rewrite:
+                raise RuntimeError('Rewriting to %s' % new_plugin_name)
+            el[key] = new_plugin_name
             integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
         except LookupError:
             if '{{' in el[key]:
                 add_manual_check(key, el[key])
 
 
-def _rewrite_yaml_mapping_values(el, namespace, collection, spec):
+def _rewrite_yaml_mapping_values(el, namespace, collection, spec, args):
     for key, value in el.items():
         if isinstance(value, Mapping):
             if key == 'vars':
-                _rewrite_yaml_mapping_keys(el[key], namespace, collection, spec)
+                _rewrite_yaml_mapping_keys(el[key], namespace, collection, spec, args)
             if key != 'vars':
-                _rewrite_yaml_mapping_keys_non_vars(el[key], namespace, collection, spec)
+                _rewrite_yaml_mapping_keys_non_vars(el[key], namespace, collection, spec, args)
         elif isinstance(value, list):
             for idx, item in enumerate(value):
                 if isinstance(item, Mapping):
-                    _rewrite_yaml_mapping(el[key][idx], namespace, collection, spec)
+                    _rewrite_yaml_mapping(el[key][idx], namespace, collection, spec, args)
                 else:
                     if key == 'module_blacklist':
                         for ns in spec.keys():
                             for coll in get_rewritable_collections(ns, spec):
                                 if item in get_plugins_from_collection(ns, coll, 'modules', spec):
-                                    el[key][idx] = get_plugin_fqcn(ns, coll, el[key][idx])
+                                    new_plugin_name = get_plugin_fqcn(ns, coll, el[key][idx])
+                                    if args.fail_on_core_rewrite:
+                                        raise RuntimeError('Rewriting to %s' % new_plugin_name)
+                                    el[key][idx] = new_plugin_name
                                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
                     if isinstance(el[key][idx], str):
                         # FIXME move to a func
-                        el[key][idx] = _rewrite_yaml_lookup(el[key][idx], namespace, collection, spec)
-                        el[key][idx] = _rewrite_yaml_filter(el[key][idx], namespace, collection, spec)
-                        el[key][idx] = _rewrite_yaml_test(el[key][idx], namespace, collection, spec)
+                        el[key][idx] = _rewrite_yaml_lookup(el[key][idx], namespace, collection, spec, args)
+                        el[key][idx] = _rewrite_yaml_filter(el[key][idx], namespace, collection, spec, args)
+                        el[key][idx] = _rewrite_yaml_test(el[key][idx], namespace, collection, spec, args)
         elif isinstance(value, str):
-            el[key] = _rewrite_yaml_lookup(el[key], namespace, collection, spec)
-            el[key] = _rewrite_yaml_filter(el[key], namespace, collection, spec)
-            el[key] = _rewrite_yaml_test(el[key], namespace, collection, spec)
+            el[key] = _rewrite_yaml_lookup(el[key], namespace, collection, spec, args)
+            el[key] = _rewrite_yaml_filter(el[key], namespace, collection, spec, args)
+            el[key] = _rewrite_yaml_test(el[key], namespace, collection, spec, args)
 
 
-def _rewrite_yaml_lookup(value, namespace, collection, spec):
+def _rewrite_yaml_lookup(value, namespace, collection, spec, args):
     if not ('lookup(' in value or 'query(' in value or 'q(' in value):
         return value
 
@@ -1158,13 +1222,16 @@ def _rewrite_yaml_lookup(value, namespace, collection, spec):
             for plugin_name in get_plugins_from_collection(ns, coll, 'lookup', spec):
                 if plugin_name not in value:
                     continue
-                value = value.replace(plugin_name, get_plugin_fqcn(ns, coll, plugin_name))
+                new_plugin_name = get_plugin_fqcn(ns, coll, plugin_name)
+                if args.fail_on_core_rewrite:
+                    raise RuntimeError('Rewriting to %s' % new_plugin_name)
+                value = value.replace(plugin_name, new_plugin_name)
                 integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
     return value
 
 
-def _rewrite_yaml_filter(value, namespace, collection, spec):
+def _rewrite_yaml_filter(value, namespace, collection, spec, args):
     if '|' not in value:
         return value
     for ns in spec.keys():
@@ -1179,13 +1246,16 @@ def _rewrite_yaml_filter(value, namespace, collection, spec):
                 for found_filter in (match[5] for match in FILTER_RE.findall(value)):
                     if found_filter not in filters:
                         continue
-                    value = value.replace(found_filter, get_plugin_fqcn(ns, coll, found_filter))
+                    new_plugin_name = get_plugin_fqcn(ns, coll, found_filter)
+                    if args.fail_on_core_rewrite:
+                        raise RuntimeError('Rewriting to %s' % new_plugin_name)
+                    value = value.replace(found_filter, new_plugin_name)
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
     return value
 
 
-def _rewrite_yaml_test(value, namespace, collection, spec):
+def _rewrite_yaml_test(value, namespace, collection, spec, args):
     if ' is ' not in value:
         return value
     for ns in spec.keys():
@@ -1200,7 +1270,10 @@ def _rewrite_yaml_test(value, namespace, collection, spec):
                 for found_test in (match[5] for match in TEST_RE.findall(value)):
                     if found_test not in tests:
                         continue
-                    value = value.replace(found_test, get_plugin_fqcn(ns, coll, found_test))
+                    new_plugin_name = get_plugin_fqcn(ns, coll, found_filter)
+                    if args.fail_on_core_rewrite:
+                        raise RuntimeError('Rewriting to %s' % new_plugin_name)
+                    value = value.replace(found_test, new_plugin_name)
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
     return value
@@ -1222,6 +1295,30 @@ def main():
     parser.add_argument('-p', '--preserve-module-subdirs', action='store_true', dest='preserve_module_subdirs', default=False,
                         help='preserve module subdirs per spec')
     parser.add_argument(
+        '--github-app-id',
+        action='store',
+        type=int,
+        dest='github_app_id',
+        default=41435,
+        help='Use this GitHub App ID for GH auth',
+    )
+    parser.add_argument(
+        '--github-app-key-path',
+        action='store',
+        type=str,
+        dest='github_app_key_path',
+        default='~/Downloads/ansible-migrator.2019-09-18.private-key.pem',
+        help='Use this PEM key file for GH auth',
+    )
+    parser.add_argument(
+        '--target-github-org',
+        action='store',
+        type=str,
+        dest='target_github_org',
+        default='ansible-collections',
+        help='Push migrated collections to this GH org',
+    )
+    parser.add_argument(
         '-P',
         '--publish-to-github',
         action='store_true',
@@ -1233,6 +1330,8 @@ def main():
                         help='remove plugins from source instead of just copying them')
     parser.add_argument('-M', '--push-migrated-core', action='store_true', dest='push_migrated_core', default=False,
                         help='Push migrated core to the Git repo')
+    parser.add_argument('-f', '--fail-on-core-rewrite', action='store_true', dest='fail_on_core_rewrite', default=False,
+            help='Fail on core rewrite. E.g. to verify core does not depend on the collections by running migration against the list of files kept in core: spec must contain the "_core" collection.')
 
     args = parser.parse_args()
 
@@ -1249,10 +1348,15 @@ def main():
     checkout_repo(args.vardir, args.refresh)
 
     # doeet
-    assemble_collections(spec, args)
+    assemble_collections(spec, args, args.target_github_org)
 
     if args.publish_to_github:
-        publish_to_github(args.vardir, spec)
+        publish_to_github(
+            args.vardir, spec,
+            gh_org=args.target_github_org,
+            gh_app_id=args.github_app_id,
+            gh_app_key_path=args.github_app_key_path,
+        )
 
     if args.push_migrated_core:
         push_migrated_core(args.vardir)
