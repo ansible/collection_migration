@@ -647,7 +647,8 @@ def assemble_collections(spec, args, target_github_org):
                     src_plugin_base = PLUGIN_EXCEPTION_PATHS[plugin_type]
 
                 # ensure destinations exist
-                dest_plugin_base = os.path.join(collection_dir, 'plugins', plugin_type)
+                relative_dest_plugin_base = os.path.join('plugins', plugin_type)
+                dest_plugin_base = os.path.join(collection_dir, relative_dest_plugin_base)
                 if not os.path.exists(dest_plugin_base):
                     os.makedirs(dest_plugin_base)
                     with open(os.path.join(dest_plugin_base, '__init__.py'), 'w') as f:
@@ -667,9 +668,6 @@ def assemble_collections(spec, args, target_github_org):
                     # TODO: currently requires 'full name of file', but should work w/o extension?
                     src = os.path.join(checkout_path, src_plugin_base, plugin)
 
-                    migrated_to_collection[os.path.join(src_plugin_base, plugin)] = (
-                        os.path.join('plugins', plugin_type, os.path.basename(plugin))
-                    )
                     remove(src)
 
                     if plugin_type in ('modules',) and '/' in plugin:
@@ -678,12 +676,18 @@ def assemble_collections(spec, args, target_github_org):
                             remove(init_py_path)
 
                     if (args.preserve_module_subdirs and plugin_type == 'modules') or plugin_type == 'module_utils':
-                        dest = os.path.join(dest_plugin_base, plugin)
+                        relative_dest_plugin_path = os.path.join(relative_dest_plugin_base, plugin)
+                        dest = os.path.join(collection_dir, relative_dest_plugin_path)
                         dest_dir = os.path.dirname(dest)
                         if not os.path.exists(dest_dir):
                             os.makedirs(dest_dir)
                     else:
-                        dest = os.path.join(dest_plugin_base, os.path.basename(plugin))
+                        relative_dest_plugin_path = os.path.join(relative_dest_plugin_base, os.path.basename(plugin))
+                        dest = os.path.join(collection_dir, relative_dest_plugin_path)
+
+                    migrated_to_collection[os.path.join(src_plugin_base, plugin)] = (
+                        relative_dest_plugin_path
+                    )
 
                     if not os.path.exists(src):
                         raise Exception('Spec specifies "%s" but file "%s" is not found in checkout' % (plugin, src))
