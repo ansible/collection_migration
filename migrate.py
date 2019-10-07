@@ -212,6 +212,7 @@ def get_rewritable_collections(namespace, spec):
 # ===== REWRITE FUNCTIONS =====
 def rewrite_class_property(mod_fst, collection, namespace):
     rewrite_map = {
+        'BecomeModule': 'name',
         'CallbackModule': 'CALLBACK_NAME',
         'Connection': 'transport',
         'InventoryModule': 'NAME',
