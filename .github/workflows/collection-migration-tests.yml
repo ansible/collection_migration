@@ -23,8 +23,7 @@ jobs:
         # - windows-2019
         # - windows-2016
         migration-scenario:
-        - bcs
-        - newworld
+        - minimal
 
     steps:
     - uses: actions/checkout@master
@@ -58,7 +57,9 @@ jobs:
       run: >-
         python -m
         migrate
-        -s "scenarios/${{ matrix.migration-scenario }}"
+        -m -s "scenarios/${{ matrix.migration-scenario }}"
+
+      # TODO: also use the ansible from the .cache
     - name: >-
         [NON-FAILING]
         Run sanity tests against all migrated collections, one by one
