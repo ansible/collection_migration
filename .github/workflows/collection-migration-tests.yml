@@ -44,11 +44,7 @@ jobs:
         python -m
         pip install
         git+https://github.com/ansible/ansible.git@devel
-        logzero
-        octomachinery
-        pytest
-        pytest-xdist
-        redbaron
+        -r requirements.txt
     - name: Configure user settings in Git
       run: |
         git config --global user.email "you@example.com"
