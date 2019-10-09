@@ -307,9 +307,9 @@ def rewrite_unit_tests_patch(mod_fst, collection, spec, namespace, args, filenam
                 val[:token_length] = new
 
                 if plugin_type == 'modules' and not args.preserve_module_subdirs:
-                    plugin_subdirs = plugin_name.split('/')[:-1]
+                    plugin_subdirs_len = len(plugin_name.split('/')[:-1])
                     new_len = len(new)
-                    del val[new_len:new_len+len(plugin_subdirs)]
+                    del val[new_len:new_len+plugin_subdirs_len]
 
                 if (found_ns, found_coll) != (namespace, collection):
                     val[1] = found_ns
@@ -522,9 +522,9 @@ def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, arg
         imp_src[:token_length] = exchange  # replace the import
 
         if plugin_type == 'modules' and not args.preserve_module_subdirs:
-            plugin_subdirs = plugin_name.split('/')[:-1]
+            plugin_subdirs_len = len(plugin_name.split('/')[:-1])
             exchange_len = len(exchange)
-            del imp_src[exchange_len:exchange_len+len(plugin_subdirs)]
+            del imp_src[exchange_len:exchange_len+plugin_subdirs_len]
 
         if (plugin_namespace, plugin_collection) != (namespace, collection):
             imp_src[1] = plugin_namespace
