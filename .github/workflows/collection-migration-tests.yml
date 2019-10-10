@@ -48,6 +48,8 @@ jobs:
 
   test-collections:
     name: Test Collections
+    needs:
+    - migrate-collections
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
