@@ -39,6 +39,10 @@ jobs:
         git config --global user.name "Poor B"
     - name: 'Run migration scenario ${{ matrix.migration-scenario }}'
       run: 'python -m migrate -m -s "scenarios/${{ matrix.migration-scenario }}"'
+    - name: >-
+        List the migrated collections
+      run: |
+          ls -Ral .cache/collections/
     - name: Store migrated collection artifacts
       uses: actions/upload-artifact@v1
       with:
