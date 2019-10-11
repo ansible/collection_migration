@@ -80,6 +80,10 @@ jobs:
           migrated-collections-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.migration-scenario }}
         path: .cache/collections/
     - name: >-
+        List the migrated collections
+      run: |
+          ls -Ral .cache/collections/
+    - name: >-
         [NON-FAILING]
         Run sanity tests against all migrated collections, one by one
       run: |
@@ -126,6 +130,10 @@ jobs:
         name: >-
           migrated-collections-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.migration-scenario }}
         path: .cache/collections/
+    - name: >-
+        List the migrated collections
+      run: |
+          ls -Ral .cache/collections/
     - name: >-
         [NON-FAILING]
         Run unit tests against all migrated collections, one by one
