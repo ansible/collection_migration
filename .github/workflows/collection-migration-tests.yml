@@ -60,7 +60,7 @@ jobs:
       with:
         name: >-
           migrated-collections-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.migration-scenario }}
-        path: ~/.collection-tarballs
+        path: ${HOME}/.collection-tarballs
 
   sanity-test-collections:
     name: Run sanity tests in collections
@@ -94,7 +94,7 @@ jobs:
       with:
         name: >-
           migrated-collections-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.migration-scenario }}
-        path: ~/.collection-tarballs
+        path: ${HOME}/.collection-tarballs
     - name: >-
         Install the migrated collections
       run: |
@@ -149,7 +149,7 @@ jobs:
       with:
         name: >-
           migrated-collections-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.migration-scenario }}
-        path: ~/.collection-tarballs
+        path: ${HOME}/.collection-tarballs
     - name: >-
         Install the migrated collections
       run: |
