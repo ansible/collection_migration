@@ -52,7 +52,7 @@ jobs:
                   echo "Generating an artifact for ${coll_dir}..."
                   cd "${coll_dir}"
                   pwd
-                  ansible-galaxy collection build --output-path ~/.collection-tarballs
+                  ansible-galaxy collection build --output-path "${GITHUB_WORKSPACE}/.cache/collection-tarballs"
               )
           done
     - name: Store migrated collection artifacts
@@ -60,7 +60,7 @@ jobs:
       with:
         name: >-
           migrated-collections-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.migration-scenario }}
-        path: ${HOME}/.collection-tarballs
+        path: .cache/collection-tarballs
 
   sanity-test-collections:
     name: Run sanity tests in collections
@@ -94,11 +94,11 @@ jobs:
       with:
         name: >-
           migrated-collections-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.migration-scenario }}
-        path: ${HOME}/.collection-tarballs
+        path: .cache/collection-tarballs
     - name: >-
         Install the migrated collections
       run: |
-          ansible-galaxy collection install ~/.collection-tarballs/*.tar.gz
+          ansible-galaxy collection install .cache/collection-tarballs/*.tar.gz
     - name: >-
         List the migrated collections
       run: |
@@ -149,11 +149,11 @@ jobs:
       with:
         name: >-
           migrated-collections-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.migration-scenario }}
-        path: ${HOME}/.collection-tarballs
+        path: .cache/collection-tarballs
     - name: >-
         Install the migrated collections
       run: |
-          ansible-galaxy collection install ~/.collection-tarballs/*.tar.gz
+          ansible-galaxy collection install .cache/collection-tarballs/*.tar.gz
     - name: >-
         List the migrated collections
       run: |
