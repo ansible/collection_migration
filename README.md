@@ -34,14 +34,14 @@ expected locations. For example:
 ```yaml
 # test_scenario/microsoft.yml
 azure:
-	module_utils:
-	 - azure.py
-	 - azure_rm.py
-	modules:
-	- cloud/azure/azure_rm_instance.py
+  module_utils:
+  - azure.py
+  - azure_rm.py
+  modules:
+  - cloud/azure/azure_rm_instance.py
 windows:
-	lookups:
-	- win_registry.py
+  lookups:
+  - win_registry.py
 ```
 
 Some existing scenarios are already provided in the repo, `bare` and
