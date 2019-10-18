@@ -1155,6 +1155,8 @@ def process_needs_target(checkout_dir, fname):
         if content:
             meta_deps = content.get('dependencies', {}) or {}
             for dep in meta_deps:
+                if isinstance(dep, dict):
+                    dep = dep.get('role')
                 dep_fname = os.path.join(checkout_dir, 'test/integration/targets', dep)
                 logger.debug('Adding integration tests dependency target %s for %s' % (dep_fname, fname))
                 deps.append((dep_fname, False))
