@@ -324,7 +324,7 @@ def rewrite_unit_tests_patch(mod_fst, collection, spec, namespace, args, filenam
 def rewrite_version_added(docs):
     docs.pop('version_added', None)
 
-    if not isinstance(docs['options'], dict)
+    if not isinstance(docs['options'], dict):
         # lib/ansible/plugins/doc_fragments/emc.py:
         # options': ['See respective platform section for more details'],
         return
