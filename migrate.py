@@ -1652,7 +1652,7 @@ def main():
     spec = {}
 
     for spec_file in os.listdir(args.spec_dir):
-        if not spec_file.endwith('.yml'):
+        if not spec_file.endswith('.yml'):
             logger.debug('skipping %s as it is not a yaml file' % spec_file)
             continue
         try:
