@@ -4,8 +4,6 @@ glob:
     - aruba.py
     - asa.py
     - assemble.py
-    - assert.py
-    - async_status.py
     - aws_s3.py
     - bigip.py
     - bigiq.py
@@ -21,10 +19,7 @@ glob:
     - enos.py
     - eos.py
     - exos.py
-    - fail.py
-    - fetch.py
     - fortios_config.py
-    - include_vars.py
     - ios.py
     - iosxr.py
     - ironware.py
@@ -52,7 +47,6 @@ glob:
     - nxos.py
     - nxos_file_copy.py
     - onyx_config.py
-    - patch.py
     - slxos.py
     - sros.py
     - synchronize.py
@@ -60,7 +54,6 @@ glob:
     - unarchive.py
     - voss.py
     - vyos.py
-    - wait_for_connection.py
     - win_copy.py
     - win_reboot.py
     - win_template.py
