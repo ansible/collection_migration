@@ -1293,7 +1293,9 @@ def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace
 
                 dummy, ext = os.path.splitext(filename)
 
-                if ext in ('.py',):
+                if ext in BAD_EXT:
+                    continue
+                elif ext in ('.py',):
                     import_deps, docs_deps = rewrite_py(full_path, dest, collection, spec, namespace, args)
 
                     for dep_ns, dep_coll in import_deps + docs_deps:
