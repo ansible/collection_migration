@@ -18,7 +18,7 @@ So how do you move existing code into a collection? Below we describe the steps 
 galaxy.yml
 ==========
 
-The first thing is creating the file that 'defines' your collection, this shoudl have the namespace and collection name as well as any other collections you depend on for content.
+The first thing is creating the file that 'defines' your collection, this should have the namespace and collection name as well as any other collections you depend on for content.
 ( note: if you plan to distribute via galaxy or some other service you need to claim that namespace). This file is used by the build process to create the collection package.
 
 
