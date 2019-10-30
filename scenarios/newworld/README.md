@@ -1,1 +1,1 @@
-Translation from a prposed spreadsheet, not really in use.
+Translation from a proposed spreadsheet, not really in use.
