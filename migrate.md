@@ -76,7 +76,7 @@ The modules and the other plugin types require some rewrites to support collecti
 
         - integration tests and roles:
                 - tasks need to be rewritten to use FQCN, this includes modules, lookups, filters and any other plugin referenced that has been moved to a collection.
-				- Jinja filters and tests FQCN includes the file name where the plugin resides.
+                - Jinja filters and tests FQCN includes the file name where the plugin resides.
 
 
 There are many corner cases if you want to automat the points above, see the `migrate.py` script for specifics.
