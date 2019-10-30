@@ -54,7 +54,7 @@ COLLECTION_SKIP_REWRITE = ('_core',)
 RAW_STR_TMPL = "r'''{str_val}'''"
 STR_TMPL = "'''{str_val}'''"
 
-BAD_EXT = frozenset(set(('.pyo', '.pyc')))
+BAD_EXT = frozenset({'.pyo', '.pyc'})
 
 os.makedirs(VARDIR, exist_ok=True)
 logzero.logfile(os.path.join(VARDIR, 'errors.log'), loglevel=logging.WARNING)
