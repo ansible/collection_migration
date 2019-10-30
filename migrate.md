@@ -79,4 +79,4 @@ The modules and the other plugin types require some rewrites to support collecti
                 - Jinja filters and tests FQCN includes the file name where the plugin resides.
 
 
-There are many corner cases if you want to automat the points above, see the `migrate.py` script for specifics.
+There are many corner cases if you want to automate the points above, see the `migrate.py` script for specifics.
