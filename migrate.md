@@ -39,7 +39,7 @@ homepage: null
 issues: null
 ```
 
- .github/BOTMETA.yml'
+ .github/BOTMETA.yml
 ====================
 
 This file is used by the core issue management bot and other tools to keep track of many things, we added a ``migrated_to`` field that will indicate the collection name of where a file is supposed to primarily reside now.
