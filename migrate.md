@@ -52,7 +52,7 @@ The modules and the other plugin types require some rewrites to support collecti
 
 
  - paths:
-        - The first ting to note, all runtime code is under the ``plugins/`` path, so modules, module_utils and all otherplugins are in their own plugin specific directory under the plugins/ top level directory in the collection.
+        - The first thing to note, all runtime code is under the ``plugins/`` path, so modules, module_utils and all other plugins are in their own plugin specific directory under the plugins/ top level directory in the collection.
           This is similar to what already exists in roles, but for modules and module_utils it is a change from the core repo.
         - tests now live under the ``tests/`` directory with ``units`` and ``integration`` subdirectories.
 
