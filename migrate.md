@@ -42,7 +42,7 @@ issues: null
  .github/BOTMETA.yml
 ====================
 
-This file is used by the core issue management bot and other tools to keep track of many things, we added a ``migrated_to`` field that will indicate the collection name of where a file is supposed to primarily reside now.
+This file is used by the core issue management bot and other tools to keep track of many things, we added a `migrated_to` field that will indicate the collection name of where a file is supposed to primarily reside now.
 You only need to update this file if your content is currently in ansible/ansible and can be ignored for 3rd party distributed content.
 
 migrating plugins
