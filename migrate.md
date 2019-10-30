@@ -68,7 +68,7 @@ The modules and the other plugin types require some rewrites to support collecti
         - imports (also for tests):
                 - relative imports work in collections, but only if they start with a ``.`` so ``./filename`` and ``../asdfu/filestuff`` works but ``filename`` in same dir does not.
                 - module_utils: the most obvious one, you go from ``import ansible.module_utils.randomdir.myutil`` to ``import ansible_collections.myname.mycoll.randomdir.myutil``.
-                - subclassing plugins: you need to follwo the same rules in changing paths and using namespaced names.
+                - subclassing plugins: you need to follow the same rules in changing paths and using namespaced names.
 
         - patches and mocks: mostly used in tests, these also might need rewrites with the same rules as imports follow.
 
