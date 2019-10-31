@@ -136,6 +136,7 @@ _core:
     - files/patch.py
     - files/replace.py
     - files/stat.py
+    - files/template.py
     - inventory/add_host.py
     - inventory/group_by.py
     - net_tools/basics/get_url.py

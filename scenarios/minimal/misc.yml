@@ -633,7 +633,6 @@ glob:
     - files/read_csv.py
     - files/synchronize.py
     - files/tempfile.py
-    - files/template.py
     - files/unarchive.py
     - files/xattr.py
     - files/xml.py
