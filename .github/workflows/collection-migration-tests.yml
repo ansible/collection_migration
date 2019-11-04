@@ -41,7 +41,7 @@ jobs:
         Run migration scenario ${{ matrix.migration-scenario }}
         and auto-publish the migrated repos to GitHub repos
       if: >-
-        github.event != "pull_request"
+        github.event_name != "pull_request"
         and github.repository == "ansible/collection_migration"
       env:
         GITHUB_APP_IDENTIFIER: 41435
@@ -56,7 +56,7 @@ jobs:
     - name: >-
         Run migration scenario ${{ matrix.migration-scenario }}
       if: >-
-        github.event == "pull_request"
+        github.event_name == "pull_request"
         or github.repository != "ansible/collection_migration"
       run: >-
         python -m
