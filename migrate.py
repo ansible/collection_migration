@@ -1628,7 +1628,8 @@ def main():
         action='store',
         type=str,
         dest='github_app_key_path',
-        default=None,
+        default=None if 'GITHUB_PRIVATE_KEY' in os.environ
+        else '~/Downloads/ansible-migrator.2019-09-18.private-key.pem',
         help='Use this PEM key file for GH auth. '
         'Altertanively, put its contents into `GITHUB_PRIVATE_KEY` env var.',
     )
@@ -1679,14 +1680,6 @@ def main():
     assemble_collections(devel_path, spec, args, args.target_github_org)
 
     if args.publish_to_github:
-        if (
-                args.github_app_key_path is None
-                and 'GITHUB_PRIVATE_KEY' not in os.environ
-        ):
-            args.github_app_key_path = (
-                '~/Downloads/'
-                'ansible-migrator.2019-09-18.private-key.pem'
-            )
         publish_to_github(
             args.vardir, spec,
             gh_org=args.target_github_org,
