@@ -1638,7 +1638,7 @@ def main():
         action='store',
         type=str,
         dest='target_github_org',
-        default='ansible-collections',
+        default='ansible-collection-migration',
         help='Push migrated collections to this GH org',
     )
     parser.add_argument(
