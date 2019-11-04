@@ -959,6 +959,8 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
 
                 # process each plugin
                 for plugin in spec[namespace][collection][plugin_type]:
+                    if os.path.basename(plugin).startswith('_') and os.path.basename(plugin) != '__init__.py':
+                        raise Exception("We should not be migrating deprecated plugins: %s (%s in %s.%s)" % (plugin, plugin_type, namespace, collection))
 
                     if os.path.splitext(plugin)[1] in BAD_EXT:
                         raise Exception("We should not be migrating compiled files: %s" % plugin)
