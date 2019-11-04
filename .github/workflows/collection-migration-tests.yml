@@ -38,7 +38,15 @@ jobs:
         git config --global user.email "ansible_migration@example.com"
         git config --global user.name "Poor B"
     - name: 'Run migration scenario ${{ matrix.migration-scenario }}'
-      run: 'python -m migrate -m -s "scenarios/${{ matrix.migration-scenario }}"'
+      env:
+        GITHUB_APP_IDENTIFIER: 41435
+      run: >-
+        python -m
+        migrate
+        -m
+        -s "scenarios/${{ matrix.migration-scenario }}"
+        -P
+        --target-github-org ansible-collection-migration
     - name: >-
         List the migrated collections
       run: |
