@@ -1620,7 +1620,7 @@ def main():
         action='store',
         type=int,
         dest='github_app_id',
-        default=41435,
+        default=None if 'GITHUB_APP_IDENTIFIER' in os.environ else 41435,
         help='Use this GitHub App ID for GH auth',
     )
     parser.add_argument(
