@@ -104,8 +104,8 @@ def actually_remove(checkout_path, namespace, collection):
     sanity_ignore = read_lines_from_file(os.path.join(checkout_path, 'test/sanity/ignore.txt'))
     new_sanity_ignore = defaultdict(list)
     for ignore in sanity_ignore:
-        values = ignore.split(' ')
-        new_sanity_ignore[values[0]].append(' '.join(values[1:]))
+        values = ignore.split(' ', 1)
+        new_sanity_ignore[values[0]].append(values[1])
 
     for path in REMOVE:
         actual_devel_path = os.path.relpath(path, checkout_path)
@@ -118,6 +118,7 @@ def actually_remove(checkout_path, namespace, collection):
     res = ''
     for filename, values in new_sanity_ignore.items():
         for value in values:
+            # value contains '\n' which is preserved from the original file
             res += '%s %s' % (filename, value)
 
     write_text_into_file(os.path.join(checkout_path, 'test/sanity/ignore.txt'), res)
