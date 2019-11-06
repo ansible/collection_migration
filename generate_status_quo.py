@@ -127,7 +127,7 @@ class StatusQuo:
 
         if not os.path.exists(self.checkout_dir):
             logger.info('git clone %s %s' % (self.url, self.checkout_dir))
-            git.clone(url, self.checkout_dir)
+            git.clone(self.url, self.checkout_dir)
         else:
             logger.info('git fetch -a')
             git.fetch('-a', _cwd=self.checkout_dir)
