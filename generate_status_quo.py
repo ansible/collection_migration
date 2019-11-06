@@ -321,7 +321,7 @@ class StatusQuo:
 
 def main():
 
-    StatusQuo().run()
+    StatusQuo.run()
 
 
 
