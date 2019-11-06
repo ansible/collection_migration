@@ -104,6 +104,7 @@ class StatusQuo:
     }
 
     def __init__(self):
+        self.pluginfiles = []
         self.collections = OrderedDict()
         self.url = 'https://github.com/ansible/ansible'
         self.checkouts_dir = '.cache/checkouts'
@@ -133,8 +134,6 @@ class StatusQuo:
 
     def get_plugins(self):
 
-        pluginfiles = []
-
         # enumerate the modules
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'modules')
         for dirName, subdirList, fileList in os.walk(root):
@@ -150,10 +149,10 @@ class StatusQuo:
                 topic = os.path.dirname(topic)
                 topic = topic.replace('/', '.')
 
-                pluginfiles.append(['modules', fn, topic, fp])
+                self.pluginfiles.append(['modules', fn, topic, fp])
 
         # make a list of unique topics
-        topics = sorted(set([x[2] for x in pluginfiles]))
+        topics = sorted(set([x[2] for x in self.pluginfiles]))
         self.topics = topics[:]
 
         # enumerate all the other plugins
@@ -181,7 +180,7 @@ class StatusQuo:
                             ptopic = topic
                             break
 
-                pluginfiles.append([ptype, fn, ptopic, fp])
+                self.pluginfiles.append([ptype, fn, ptopic, fp])
 
         # let's get rid of contrib too
         root = os.path.join(self.checkout_dir, 'contrib', 'inventory')
@@ -199,7 +198,7 @@ class StatusQuo:
 
                 if ptopic is None:
                     #print(fn)
-                    for idx,x in enumerate(pluginfiles):
+                    for idx,x in enumerate(self.pluginfiles):
                         if not x[2]:
                             continue
                         xbn = os.path.basename(x[-1]).replace('.py', '')
@@ -210,23 +209,23 @@ class StatusQuo:
                 #if ptopic is None:
                 #    import epdb; epdb.st()
 
-                pluginfiles.append([ptype, fn, ptopic, fp])
+                self.pluginfiles.append([ptype, fn, ptopic, fp])
 
         # match action plugins to modules
-        for idx,x in enumerate(pluginfiles):
+        for idx,x in enumerate(self.pluginfiles):
             if x[2]:
                 continue
             if x[0] != 'action':
                 continue
-            for pf in pluginfiles:
+            for pf in self.pluginfiles:
                 if not pf[2]:
                     continue
                 if os.path.basename(pf[-1]).replace('.py', '') == os.path.basename(x[-1]).replace('.py', '').replace('.ini', ''):
-                    pluginfiles[idx][2] = pf[2]
+                    self.pluginfiles[idx][2] = pf[2]
                     break
 
         # fill in topics via synonyms
-        for idx,x in enumerate(pluginfiles):
+        for idx,x in enumerate(self.pluginfiles):
             if x[2]:
                 continue
 
@@ -247,11 +246,11 @@ class StatusQuo:
                                 ptopic = topic
                                 break
                 if ptopic:
-                    pluginfiles[idx][2] = ptopic
+                    self.pluginfiles[idx][2] = ptopic
                     break
 
         # find which modules use orphaned doc fragments
-        for idx,x in enumerate(pluginfiles):
+        for idx,x in enumerate(self.pluginfiles):
             if x[2]:
                 continue
             if x[0] != 'doc_fragments':
@@ -267,11 +266,8 @@ class StatusQuo:
                 dirnames = [x.replace(os.path.join(self.checkout_dir, 'lib', 'ansible', 'modules') + '/', '') for x in dirnames]
                 dirnames = sorted(set(dirnames))
                 logger.info('%s dirs' % len(dirnames))
-                #import epdb; epdb.st()
 
-
-        self.orphaned = [x for x in pluginfiles if not x[-2]]
-        self.pluginfiles = pluginfiles[:]
+        self.orphaned = [x for x in self.pluginfiles if not x[-2]]
 
     def make_spec(self):
         topics = self.topics[:]
