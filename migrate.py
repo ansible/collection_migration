@@ -119,22 +119,18 @@ def checkout_repo(
         subprocess.check_call(('git', 'pull', '--rebase'), cwd=checkout_path)
 
     return set(
-        filter(
-            bool,
-            map(
-                str.strip,
-                subprocess.check_output(
-                    (
-                        'git', 'ls-tree',
-                        '--full-tree',
-                        '-r',
-                        '--name-only',
-                        'HEAD',
-                    ),
-                    text=True, cwd=checkout_path,
-                ).split('\n'),
-            ),
-        ),
+        f for f in (
+            f_.strip() for f_ in subprocess.check_output(
+                (
+                    'git', 'ls-tree',
+                    '--full-tree',
+                    '-r',
+                    '--name-only',
+                    'HEAD',
+                ),
+                text=True, cwd=checkout_path,
+            ).split('\n')
+        )
     )
 
 
