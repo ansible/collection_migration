@@ -3,3 +3,5 @@ gidgethub  # dependency of octomachinery but imported too
 logzero
 octomachinery
 redbaron
+ruamel.yaml
+sh
