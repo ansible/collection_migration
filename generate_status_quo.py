@@ -109,7 +109,9 @@ class StatusQuo:
         self.checkouts_dir = '.cache/checkouts'
         self.checkout_dir = os.path.join(self.checkouts_dir, 'ansible')
 
-    def run(self):
+    @classmethod
+    def run(cls):
+        self = cls()
         self.manage_checkout()
         self.get_plugins()
         self.make_spec()
@@ -330,8 +332,7 @@ def main():
     parser.add_argument('--namespace_prefix', default=None, help='prefix each collection namespace with this string')
     args = parser.parse_args()
 
-    sq = StatusQuo()
-    sq.run()
+    StatusQuo().run()
 
 
 
