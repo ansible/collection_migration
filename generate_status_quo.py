@@ -10,7 +10,6 @@
 # Ideally, -you- munge this script until no files are orphaned.
 
 
-import argparse
 import contextlib
 import copy
 import os
@@ -322,11 +321,6 @@ class StatusQuo:
 
 
 def main():
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--filter')
-    parser.add_argument('--namespace_prefix', default=None, help='prefix each collection namespace with this string')
-    args = parser.parse_args()
 
     StatusQuo().run()
 
