@@ -16,7 +16,6 @@ import os
 import shutil
 import subprocess
 
-from collections import OrderedDict
 from logzero import logger
 import ruamel.yaml
 from sh import git
@@ -104,7 +103,7 @@ class StatusQuo:
 
     def __init__(self):
         self.pluginfiles = []
-        self.collections = OrderedDict()
+        self.collections = {}
         self.url = 'https://github.com/ansible/ansible'
         self.checkouts_dir = '.cache/checkouts'
         self.checkout_dir = os.path.join(self.checkouts_dir, 'ansible')
@@ -301,14 +300,14 @@ class StatusQuo:
             shutil.rmtree('status_quo')
         os.makedirs('status_quo')
 
-        namespaces = OrderedDict()
+        namespaces = {}
         for k,v in self.collections.items():
             if '.' not in k:
                 continue
             namespace = k.split('.')[0]
             name = k.split('.')[1]
             if namespace not in namespaces:
-                namespaces[namespace] = OrderedDict()
+                namespaces[namespace] = {}
             namespaces[namespace][name] = copy.deepcopy(v)
 
         for namespace,names in namespaces.items():
