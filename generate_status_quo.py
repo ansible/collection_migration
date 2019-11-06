@@ -319,11 +319,5 @@ class StatusQuo:
             ruamel.yaml.dump(self.collections['_orphaned'], f, Dumper=ruamel.yaml.RoundTripDumper)
 
 
-def main():
-
-    StatusQuo.run()
-
-
-
 if __name__ == "__main__":
-    main()
+    StatusQuo.run()
