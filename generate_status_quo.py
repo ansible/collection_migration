@@ -11,6 +11,7 @@
 
 
 import argparse
+import contextlib
 import copy
 import os
 import shutil
@@ -22,12 +23,6 @@ import ruamel.yaml
 from sh import git
 from sh import find
 
-
-
-def run_command(cmd):
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (so, se) = p.communicate()
-    return (p.returncode, so, se)
 
 
 class StatusQuo:
@@ -262,10 +257,8 @@ class StatusQuo:
             df = os.path.basename(x[-1])
             df = df.replace('.py', '')
             cmd = 'find %s -type f | xargs fgrep -iH %s' % (os.path.join(self.checkout_dir, 'lib', 'ansible', 'modules'), df)
-            logger.info(cmd)
-            (rc, so, se) = run_command(cmd)
-            if rc == 0:
-                filenames = so.decode('utf-8').split('\n')
+            with contextlib.suppress(subprocess.CalledProcessError):
+                filenames = subprocess.check_output(cmd, shell=True, text=True).split('\n')
                 filenames = [x.split(':')[0] for x in filenames if x]
                 filenames = sorted(set(filenames))
                 dirnames = [os.path.dirname(x) for x in filenames]
@@ -273,6 +266,7 @@ class StatusQuo:
                 dirnames = sorted(set(dirnames))
                 logger.info('%s dirs' % len(dirnames))
                 #import epdb; epdb.st()
+
 
         self.orphaned = [x for x in pluginfiles if not x[-2]]
         self.pluginfiles = pluginfiles[:]
