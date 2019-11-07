@@ -14,5 +14,5 @@ Opinionated 'minimal' usable Ansible version, keeps certain things in Core that 
   * Ability to setup and use package repos
   * Ability to work online or offline
 * Include things that are "hardcoded" into Ansible
-  * ie `stat` is used to handle any file information internally
+  * eg `stat` is used to handle any file information internally
   * `include_tasks` is hardcoded as the implementation is inside the engine, same with `add_hosts`, `group-by`, `debug` and others, async_wrapp, async-poll, assert/fail are 'parts of the language'
