@@ -37,7 +37,7 @@ class StatusQuo:
         #'azure_rm': 'azure',
         'bigip': 'f5',
         'bigiq': 'f5',
-        'ce': 'cloudengine',
+        #'ce': 'cloudengine',
         'checkpoint': 'check_point',
         'cloudforms': 'cloud',
         #'cloudstack': 'cloud.cloudstack',
@@ -130,6 +130,106 @@ class StatusQuo:
             logger.info('git pull --rebase')
             git.pull('--rebase', _cwd=self.checkout_dir)
 
+    def _guess_topic(self, filename):
+        bn = os.path.basename(filename)
+        bn = bn.replace('.py', '').replace('.ini', '')
+
+        # match on similar filenames
+        for pf in self.pluginfiles:
+            if not pf[2]:
+                continue
+            if os.path.basename(pf[-1]).replace('.py', '') == bn:
+                logger.debug('A. %s --> %s' % (filename, pf[2]))
+                return pf[2]
+
+        # match basename to similar dirname
+        for pf in self.pluginfiles:
+            if not pf[2]:
+                continue
+            xdn = os.path.basename(os.path.dirname(pf[-1]))
+            if xdn == bn:
+                logger.debug('A(1). %s --> %s' % (filename, pf[2]))
+                return pf[2]
+
+        '''
+        # match similar dirname to similar dirname
+        fdn = os.path.basename(os.path.dirname(filename))
+        for pf in self.pluginfiles:
+            if not pf[2]:
+                continue
+            xdn = os.path.basename(os.path.dirname(pf[-1]))
+            if fdn == xdn:
+                logger.debug('A(2). %s --> %s' % (filename, pf[2]))
+                return pf[2]
+        '''
+
+        # use path segments to match
+        fparts = filename.split('/')
+        fparts[-1] = fparts[-1].split('.')[0]
+        for part in fparts[::-1]:
+            if part in self.topics:
+                return part
+        for part in fparts[::-1]:
+            for topic in self.topics:
+                if not '.' in topic:
+                    continue
+                if topic.startswith(part + '.') or topic.endswith('.' + part):
+                    return topic
+        for part in fparts[::-1]:
+            if part in self.synonyms:
+                syn = self.synonyms[part]
+                if syn in self.topics:
+                    return syn
+        for part in fparts[::-1]:
+            if part in self.synonyms:
+                syn = self.synonyms[part]
+                for topic in self.topics:
+                    if not '.' in topic:
+                        continue
+                    if topic.startswith(syn + '.') or topic.endswith('.' + syn):
+                        return topic
+
+        # is this a _ delimited name?
+        if '_' in bn:
+            _bn = bn.split('_')[0]
+            for pf in self.pluginfiles:
+                if not pf[2]:
+                    continue
+                xbn = os.path.basename(pf[-1]).replace('.py', '').replace('.ini', '').replace('.yml', '')
+                if '_' in xbn:
+                    xbn = xbn.split('_')[0]
+                if xbn == _bn:
+                    logger.debug('A(3). %s --> %s' % (filename, pf[2]))
+                    return pf[2]
+
+        # fill in topics via synonyms
+        for idx,x in enumerate(self.pluginfiles):
+
+            if not x[2]:
+                continue
+
+            for a,b in self.synonyms.items():
+                if a in bn:
+
+                    if not '.' in x[2] and b == x[2]:
+                        logger.debug('B. %s --> %s' % (filename, x[2]))
+                        return x[2]
+                    elif x[2].endswith(bn):
+                        logger.debug('C. %s --> %s' % (filename, x[2]))
+                        return x[2]
+                    elif os.path.dirname(x[-1]).endswith(b):
+                        logger.debug('D. %s --> %s' % (filename, x[2]))
+                        return x[2]
+
+                    xdn = x[-1].replace(self.checkout_dir + '/', '')
+                    if b in xdn:
+                        logger.debug('E. %s --> %s' % (filename, x[2]))
+                        return x[2]
+                    #import epdb; epdb.st()
+
+        return None
+
+
     def get_plugins(self):
 
         # enumerate the modules
@@ -150,8 +250,18 @@ class StatusQuo:
                 self.pluginfiles.append(['modules', fn, topic, fp])
 
         # make a list of unique topics
-        topics = sorted(set([x[2] for x in self.pluginfiles]))
-        self.topics = topics[:]
+        self.topics = sorted(set([x[2] for x in self.pluginfiles]))
+
+        # enumerate the module utils
+        root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'module_utils')
+        for dirName, subdirList, fileList in os.walk(root):
+
+            for fn in fileList:
+                if fn == '__init__.py':
+                    continue
+                fp = os.path.join(dirName, fn)
+                topic = self._guess_topic(fp)
+                self.pluginfiles.append(['module_utils', fn, topic, fp])
 
         # enumerate all the other plugins
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'plugins')
@@ -165,20 +275,7 @@ class StatusQuo:
 
                 ptype = os.path.basename(dirName)
                 fp = os.path.join(dirName, fn)
-
-                # hacky topic matching
-                ptopic = None
-                for topic in topics:
-                    if topic in fn:
-                        ptopic = topic
-                        break
-                    if '.' in topic:
-                        tparts = topic.split('.')
-                        if tparts[-1] in fn:
-                            ptopic = topic
-                            break
-
-                self.pluginfiles.append([ptype, fn, ptopic, fp])
+                self.pluginfiles.append([ptype, fn, None, fp])
 
         # let's get rid of contrib too
         root = os.path.join(self.checkout_dir, 'contrib', 'inventory')
@@ -187,65 +284,14 @@ class StatusQuo:
             for fn in fileList:
                 fp = os.path.join(dirName, fn)
                 bn = os.path.basename(fn).replace('.py', '').replace('.ini', '')
+                topic = self._guess_topic(fp)
+                self.pluginfiles.append([ptype, fn, topic, fp])
 
-                ptopic = None
-                for topic in topics:
-                    if topic in bn or bn in topic:
-                        ptopic = topic
-                        break
-
-                if ptopic is None:
-                    #print(fn)
-                    for idx,x in enumerate(self.pluginfiles):
-                        if not x[2]:
-                            continue
-                        xbn = os.path.basename(x[-1]).replace('.py', '')
-                        if xbn in bn or bn in xbn:
-                            ptopic = x[2]
-                            break
-
-                #if ptopic is None:
-                #    import epdb; epdb.st()
-
-                self.pluginfiles.append([ptype, fn, ptopic, fp])
-
-        # match action plugins to modules
+        # guess the rest 
         for idx,x in enumerate(self.pluginfiles):
             if x[2]:
                 continue
-            if x[0] != 'action':
-                continue
-            for pf in self.pluginfiles:
-                if not pf[2]:
-                    continue
-                if os.path.basename(pf[-1]).replace('.py', '') == os.path.basename(x[-1]).replace('.py', '').replace('.ini', ''):
-                    self.pluginfiles[idx][2] = pf[2]
-                    break
-
-        # fill in topics via synonyms
-        for idx,x in enumerate(self.pluginfiles):
-            if x[2]:
-                continue
-
-            #print(x)
-            ptopic = None
-            for k,v in self.synonyms.items():
-                #print('k: %s' % k)
-                if k in x[1]:
-                    # hacky topic matching
-                    for topic in topics:
-                        #print('topic: %s' % topic)
-                        if topic in v:
-                            ptopic = topic
-                            break
-                        if '.' in topic:
-                            tparts = topic.split('.')
-                            if tparts[-1] in v:
-                                ptopic = topic
-                                break
-                if ptopic:
-                    self.pluginfiles[idx][2] = ptopic
-                    break
+            self.pluginfiles[idx][2] = self._guess_topic(x[-1])
 
         # find which modules use orphaned doc fragments
         for idx,x in enumerate(self.pluginfiles):
