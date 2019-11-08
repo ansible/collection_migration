@@ -357,11 +357,11 @@ class StatusQuo:
             namespaces[namespace][name] = copy.deepcopy(v)
 
         for namespace,names in namespaces.items():
-            fn = os.path.join('status_quo', namespace + '.yaml')
+            fn = os.path.join('status_quo', namespace + '.yml')
             with open(fn, 'w') as f:
                 ruamel.yaml.dump(names, f, Dumper=ruamel.yaml.RoundTripDumper)
 
-        with open(os.path.join('status_quo', '_orphaned.yaml'), 'w') as f:
+        with open(os.path.join('status_quo', '_orphaned.yml'), 'w') as f:
             ruamel.yaml.dump(self.collections['_orphaned'], f, Dumper=ruamel.yaml.RoundTripDumper)
 
 
