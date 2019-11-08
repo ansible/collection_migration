@@ -78,6 +78,7 @@ VALID_PLUGIN_TYPES = frozenset({
     'terminal',
     'test',
     'vars',
+    'scripts/inventory'
 })
 
 LOGFILE = os.path.join(VARDIR, 'errors.log')
