@@ -333,7 +333,25 @@ class StatusQuo:
                 topic = topic + '.misc'
             if ptype not in self.collections[topic]:
                 self.collections[topic][ptype] = []
-            self.collections[topic][ptype].append(x[1])
+
+            spec_path = x[3].replace(os.path.join(self.checkout_dir, 'lib', 'ansible'), '')
+            spec_path = spec_path.lstrip('/')
+            if spec_path.startswith('modules/'):
+                spec_path = spec_path.replace('modules/', '', 1)
+            elif spec_path.startswith('module_utils/'):
+                spec_path = spec_path.replace('module_utils/', '', 1)
+            elif spec_path.startswith('plugins/'):
+                spec_path = spec_path.replace('plugins/', '', 1)
+                pos = spec_path.index('/') + 1
+                spec_path = spec_path[pos:]
+            elif 'contrib/inventory' in spec_path:
+                spec_path = os.path.join('contrib', 'inventory', os.path.basename(spec_path))
+            else:
+                import epdb; epdb.st()
+            
+            #self.collections[topic][ptype].append(x[1])
+            self.collections[topic][ptype].append(spec_path)
+            #import epdb; epdb.st()
 
         self.collections['_orphaned'] = sorted(self.collections['_orphaned'])
         for k,v in self.collections.items():
