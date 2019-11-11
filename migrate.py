@@ -890,13 +890,10 @@ def copy_unit_tests(checkout_path, collection_dir, plugin_type, plugin, spec):
         """
         for td, tm in map(os.path.split, paths):
             relative_td = os.path.relpath(td, checkout_path)
-            copy_map_relative_td_to = os.path.join(
-                collection_unit_tests_relative_root,
-                plugin_type, plugin_dir,
-            )
+            test_artifact_path = os.path.join(relative_td, tm)
             yield (
-                os.path.join(relative_td, tm),
-                os.path.join(copy_map_relative_td_to, tm),
+                test_artifact_path,
+                replace_path_prefix(test_artifact_path),
             )
 
             if not find_related:
