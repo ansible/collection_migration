@@ -280,7 +280,7 @@ class StatusQuo:
         # let's get rid of contrib too
         root = os.path.join(self.checkout_dir, 'contrib', 'inventory')
         for dirName, subdirList, fileList in os.walk(root):
-            ptype = 'scripts/inventory'
+            ptype = 'scripts'
             for fn in fileList:
                 fp = os.path.join(dirName, fn)
                 bn = os.path.basename(fn).replace('.py', '').replace('.ini', '')
@@ -319,15 +319,16 @@ class StatusQuo:
             if not '.' in x:
                 topics[idx] = x + '.misc'
         self.collections['_core'] = {}
-        self.collections['_orphaned'] = []
+        self.collections['orphaned.misc'] = {}
         for topic in topics:
             self.collections[topic] = {}
 
         for idx,x in enumerate(self.pluginfiles):
             topic = x[2]
             if topic is None:
-                self.collections['_orphaned'].append(x[-1])
-                continue
+                #self.collections['_orphaned'].append(x[-1])
+                #continue
+                topic = 'orphaned'
             ptype = x[0]
             if not '.' in topic:
                 topic = topic + '.misc'
@@ -353,10 +354,10 @@ class StatusQuo:
             self.collections[topic][ptype].append(spec_path)
             #import epdb; epdb.st()
 
-        self.collections['_orphaned'] = sorted(self.collections['_orphaned'])
+        #self.collections['_orphaned'] = sorted(self.collections['_orphaned'])
         for k,v in self.collections.items():
-            if k == '_orphaned':
-                continue
+            #if k == '_orphaned':
+            #    continue
             for ptype, pfiles in v.items():
                 self.collections[k][ptype] = sorted(pfiles)
 
@@ -379,9 +380,10 @@ class StatusQuo:
             with open(fn, 'w') as f:
                 ruamel.yaml.dump(names, f, Dumper=ruamel.yaml.RoundTripDumper)
 
+        '''
         with open(os.path.join('status_quo', '_orphaned.yml'), 'w') as f:
             ruamel.yaml.dump(self.collections['_orphaned'], f, Dumper=ruamel.yaml.RoundTripDumper)
-
+        '''
 
 if __name__ == "__main__":
     StatusQuo.run()

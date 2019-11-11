@@ -47,7 +47,7 @@ MIGRATED_DEVEL_URL = 'git@github.com:ansible/migratedcore.git'
 ALL_THE_FILES = set()
 VARDIR = os.environ.get('GRAVITY_VAR_DIR', '.cache')
 COLLECTION_NAMESPACE = 'test_migrate_ns'
-PLUGIN_EXCEPTION_PATHS = {'modules': 'lib/ansible/modules', 'module_utils': 'lib/ansible/module_utils'}
+PLUGIN_EXCEPTION_PATHS = {'modules': 'lib/ansible/modules', 'module_utils': 'lib/ansible/module_utils', 'scripts': ''}
 
 
 COLLECTION_SKIP_REWRITE = ('_core',)
@@ -73,12 +73,12 @@ VALID_PLUGIN_TYPES = frozenset({
     'module_utils',
     'modules',
     'netconf',
+    'scripts',
     'shell',
     'strategy',
     'terminal',
     'test',
     'vars',
-    'scripts/inventory'
 })
 
 LOGFILE = os.path.join(VARDIR, 'errors.log')
@@ -364,7 +364,6 @@ def rewrite_unit_tests_patch(mod_fst, collection, spec, namespace, args, filenam
                     # Not enough information to search for the plugin, safe to assume it's not for the rewrite
                     # e.g. 'ansible.plugins.inventory'
                     continue
-
                 try:
                     found_ns, found_coll = get_plugin_collection(plugin_name, plugin_type, spec)
                 except LookupError:
@@ -1026,9 +1025,6 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
             }
 
             for plugin_type in spec[namespace][collection].keys():
-
-                if plugin_type == 'scripts/inventory':
-                    continue
 
                 plugins = spec[namespace][collection][plugin_type]
                 if not plugins:
