@@ -1025,7 +1025,6 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
             }
 
             for plugin_type in spec[namespace][collection].keys():
-
                 plugins = spec[namespace][collection][plugin_type]
                 if not plugins:
                     logger.error('Empty plugin_type: %s in spec for %s.%s' % (plugin_type, namespace, collection))
