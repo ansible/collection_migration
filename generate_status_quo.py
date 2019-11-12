@@ -42,6 +42,7 @@ class StatusQuo:
         'cloudforms': 'cloud',
         #'cloudstack': 'cloud.cloudstack',
         #'consul': 'clustering.consul',
+        'csharp': 'windows',
         #'dns': 'net_tools',
         'ec2': 'amazon',
         #'ecs': 'crypto.entrust',
@@ -79,6 +80,7 @@ class StatusQuo:
         'package': 'packaging.os',
         'passwordstore': 'identity',
 
+        'postgres': 'postgresql',
         'powershell': 'windows',
         #'proxmox': 'cloud.misc',
         'psrp': 'windows',
@@ -99,6 +101,7 @@ class StatusQuo:
         'vmware': 'cloud.vmware',
         #'yum': 'packaging.os',
         #'zabbix': 'monitoring.zabbix'
+        'yumdnf': 'packaging',
     }
 
     def __init__(self):
@@ -134,12 +137,26 @@ class StatusQuo:
         bn = os.path.basename(filename)
         bn = bn.replace('.py', '').replace('.ini', '')
 
+
+        # does the filepath contain a topic?
+        paths = filename.replace(self.checkout_dir + '/', '')
+        paths = paths.replace('lib/ansible/', '')
+        paths = paths.split('/')
+        paths = paths[1:]
+
+        for ltup in zip(paths, paths[1:]):
+            thistopic = '.'.join(ltup)
+            if thistopic in self.topics:
+                return thistopic
+
         # match on similar filenames
         for pf in self.pluginfiles:
             if not pf[2]:
                 continue
             if os.path.basename(pf[-1]).replace('.py', '') == bn:
                 logger.debug('A. %s --> %s' % (filename, pf[2]))
+                #if 'fortios' in filename:
+                #    import epdb; epdb.st()
                 return pf[2]
 
         # match basename to similar dirname
@@ -149,6 +166,8 @@ class StatusQuo:
             xdn = os.path.basename(os.path.dirname(pf[-1]))
             if xdn == bn:
                 logger.debug('A(1). %s --> %s' % (filename, pf[2]))
+                #if 'fortios' in filename:
+                #    import epdb; epdb.st()
                 return pf[2]
 
         '''
@@ -174,11 +193,19 @@ class StatusQuo:
                 if not '.' in topic:
                     continue
                 if topic.startswith(part + '.') or topic.endswith('.' + part):
+
+                    #if 'fortios' in filename:
+                    #    import epdb; epdb.st()
+
                     return topic
         for part in fparts[::-1]:
             if part in self.synonyms:
                 syn = self.synonyms[part]
                 if syn in self.topics:
+
+                    #if 'fortios' in filename:
+                    #    import epdb; epdb.st()
+
                     return syn
         for part in fparts[::-1]:
             if part in self.synonyms:
@@ -187,6 +214,10 @@ class StatusQuo:
                     if not '.' in topic:
                         continue
                     if topic.startswith(syn + '.') or topic.endswith('.' + syn):
+
+                        #if 'fortios' in filename:
+                        #    import epdb; epdb.st()
+
                         return topic
 
         # is this a _ delimited name?
