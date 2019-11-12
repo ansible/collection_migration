@@ -289,11 +289,7 @@ class StatusQuo:
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'modules')
         for dirName, subdirList, fileList in os.walk(root):
 
-            for fn in fileList:
-                if fn == '__init__.py':
-                    continue
-                if fn == 'loader.py':
-                    continue
+            for fn in set(fileList) - {'__init__.py', 'loader.py'}:
                 fp = os.path.join(dirName, fn)
 
                 topic = fp.replace(root + '/', '')
@@ -309,9 +305,7 @@ class StatusQuo:
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'module_utils')
         for dirName, subdirList, fileList in os.walk(root):
 
-            for fn in fileList:
-                if fn == '__init__.py':
-                    continue
+            for fn in set(fileList) - {'__init__.py', 'loader.py'}:
                 fp = os.path.join(dirName, fn)
                 topic = self._guess_topic(fp)
                 self.pluginfiles.append(['module_utils', fn, topic, fp])
@@ -320,12 +314,7 @@ class StatusQuo:
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'plugins')
         for dirName, subdirList, fileList in os.walk(root):
 
-            for fn in fileList:
-                if fn == '__init__.py':
-                    continue
-                if fn == 'loader.py':
-                    continue
-
+            for fn in set(fileList) - {'__init__.py', 'loader.py'}:
                 ptype = os.path.basename(dirName)
                 fp = os.path.join(dirName, fn)
                 self.pluginfiles.append([ptype, fn, None, fp])
