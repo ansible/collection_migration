@@ -1131,10 +1131,10 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                         continue
 
                     logger.info('Processing %s -> %s' % (src, dest))
-
-                    deps = rewrite_py(src, dest, collection, spec, namespace, args)
-                    import_deps += deps[0]
-                    docs_deps += deps[1]
+                    if 'contrib/inventory' not in src:
+                        deps = rewrite_py(src, dest, collection, spec, namespace, args)
+                        import_deps += deps[0]
+                        docs_deps += deps[1]
 
                     integration_test_dirs.extend(poor_mans_integration_tests_discovery(checkout_path, plugin_type, plugin))
                     # process unit tests
