@@ -292,14 +292,14 @@ class StatusQuo:
             for fn in set(fileList) - {'__init__.py', 'loader.py'}:
                 fp = os.path.join(dirName, fn)
 
-                topic = fp.replace(root + '/', '')
+                topic = os.path.relpath(fp, root)
                 topic = os.path.dirname(topic)
                 topic = topic.replace('/', '.')
 
                 self.pluginfiles.append(['modules', fn, topic, fp])
 
         # make a list of unique topics
-        self.topics = sorted(set([x[2] for x in self.pluginfiles]))
+        self.topics = sorted(set(x[2] for x in self.pluginfiles))
 
         # enumerate the module utils
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'module_utils')
