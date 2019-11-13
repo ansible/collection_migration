@@ -1151,14 +1151,7 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                     os.path.join(collection_dir, 'tests', 'unit'),
                 )
 
-                for file_path in itertools.chain.from_iterable(
-                        (os.path.join(dp, f) for f in fn if f.endswith('.py'))
-                        for dp, dn, fn in os.walk(os.path.join(collection_dir, 'tests', 'unit'))
-                ):
-                    _unit_test_module_src_text, unit_test_module_fst = read_module_txt_n_fst(file_path)
-                    unit_deps += rewrite_imports(unit_test_module_fst, collection, spec, namespace, args)
-                    unit_deps += rewrite_unit_tests_patch(unit_test_module_fst, collection, spec, namespace, args, file_path)
-                    write_text_into_file(file_path, unit_test_module_fst.dumps())
+                unit_deps += rewrite_unit_tests(collection_dir, collection, spec, namespace, args)
 
                 inject_gitignore_into_tests(collection_dir)
 
@@ -1174,11 +1167,7 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                     logger.error(e)
 
                 global integration_tests_deps
-                for dep_ns, dep_coll in integration_tests_deps.union(import_deps + docs_deps + unit_deps):
-                    dep = '%s.%s' % (dep_ns, dep_coll)
-                    # FIXME hardcoded version
-                    galaxy_metadata['dependencies'][dep] = '>=1.0'
-
+                add_deps_to_metadata(integration_tests_deps.union(import_deps + docs_deps + unit_deps), galaxy_metadata)
                 integration_test_dirs = []
                 integration_tests_deps = set()
 
@@ -1207,6 +1196,28 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
 
             global REMOVE
             REMOVE = set()
+
+
+def rewrite_unit_tests(collection_dir, collection, spec, namespace, args):
+    deps = []
+
+    for file_path in itertools.chain.from_iterable(
+            (os.path.join(dp, f) for f in fn if f.endswith('.py'))
+            for dp, dn, fn in os.walk(os.path.join(collection_dir, 'tests', 'unit'))
+    ):
+        _unit_test_module_src_text, unit_test_module_fst = read_module_txt_n_fst(file_path)
+        deps += rewrite_imports(unit_test_module_fst, collection, spec, namespace, args)
+        deps += rewrite_unit_tests_patch(unit_test_module_fst, collection, spec, namespace, args, file_path)
+        write_text_into_file(file_path, unit_test_module_fst.dumps())
+
+    return deps
+
+
+def add_deps_to_metadata(deps, galaxy_metadata):
+    for dep_ns, dep_coll in deps:
+        dep = '%s.%s' % (dep_ns, dep_coll)
+        # FIXME hardcoded version
+        galaxy_metadata['dependencies'][dep] = '>=1.0'
 
 
 def publish_to_github(collections_target_dir, spec, *, gh_org, gh_app_id, gh_app_key_path):
