@@ -363,6 +363,7 @@ def rewrite_unit_tests_patch(mod_fst, collection, spec, namespace, args, filenam
                     # Not enough information to search for the plugin, safe to assume it's not for the rewrite
                     # e.g. 'ansible.plugins.inventory'
                     continue
+
                 try:
                     found_ns, found_coll = get_plugin_collection(plugin_name, plugin_type, spec)
                 except LookupError:
@@ -1129,6 +1130,7 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                         continue
 
                     logger.info('Processing %s -> %s' % (src, dest))
+
                     deps = rewrite_py(src, dest, collection, spec, namespace, args)
                     import_deps += deps[0]
                     docs_deps += deps[1]
