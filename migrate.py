@@ -47,7 +47,7 @@ MIGRATED_DEVEL_URL = 'git@github.com:ansible/migratedcore.git'
 ALL_THE_FILES = set()
 VARDIR = os.environ.get('GRAVITY_VAR_DIR', '.cache')
 COLLECTION_NAMESPACE = 'test_migrate_ns'
-PLUGIN_EXCEPTION_PATHS = {'modules': 'lib/ansible/modules', 'module_utils': 'lib/ansible/module_utils', 'scripts': ''}
+PLUGIN_EXCEPTION_PATHS = {'modules': 'lib/ansible/modules', 'module_utils': 'lib/ansible/module_utils'}
 
 
 COLLECTION_SKIP_REWRITE = ('_core',)
@@ -73,7 +73,6 @@ VALID_PLUGIN_TYPES = frozenset({
     'module_utils',
     'modules',
     'netconf',
-    'scripts',
     'shell',
     'strategy',
     'terminal',
@@ -1130,10 +1129,9 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                         continue
 
                     logger.info('Processing %s -> %s' % (src, dest))
-                    if 'contrib/inventory' not in src:
-                        deps = rewrite_py(src, dest, collection, spec, namespace, args)
-                        import_deps += deps[0]
-                        docs_deps += deps[1]
+                    deps = rewrite_py(src, dest, collection, spec, namespace, args)
+                    import_deps += deps[0]
+                    docs_deps += deps[1]
 
                     integration_test_dirs.extend(poor_mans_integration_tests_discovery(checkout_path, plugin_type, plugin))
                     # process unit tests
