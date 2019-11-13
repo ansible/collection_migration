@@ -2051,7 +2051,10 @@ glob:
     - notification/flowdock.py
     - notification/grove.py
     - notification/hipchat.py
+    - notification/irc.py
+    - notification/jabber.py
     - notification/logentries_msg.py
+    - notification/mail.py
     - notification/matrix.py
     - notification/mattermost.py
     - notification/mqtt.py
