@@ -422,10 +422,19 @@ class StatusQuo:
             with open(fn, 'w') as f:
                 ruamel.yaml.dump(names, f, Dumper=ruamel.yaml.RoundTripDumper)
 
-        '''
-        with open(os.path.join('status_quo', '_orphaned.yml'), 'w') as f:
-            ruamel.yaml.dump(self.collections['_orphaned'], f, Dumper=ruamel.yaml.RoundTripDumper)
-        '''
+            # comment out the contrib scripts until migrate.py can support them
+            has_scripts = [x.get('scripts') for x in names.values()]
+            has_scripts = [x for x in has_scripts if x]
+            if has_scripts:
+                logger.info('commenting out scripts in %s' % namespace)
+                with open(fn, 'r') as f:
+                    fdata = f.read()
+                fdata = fdata.replace('scripts:', '#scripts:')
+                fdata = fdata.replace('- contrib/inventory', '#- contrib/inventory')
+                os.remove(fn)
+                with open(fn, 'w') as f:
+                    f.write(fdata)
+
 
 if __name__ == "__main__":
     StatusQuo.run()
