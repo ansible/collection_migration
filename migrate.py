@@ -1215,6 +1215,7 @@ def rewrite_unit_tests(collection_dir, collection, spec, namespace, args):
 
 
 def add_deps_to_metadata(deps, galaxy_metadata):
+    """Augment galaxy metadata with the dependencies."""
     for dep_ns, dep_coll in deps:
         dep = '%s.%s' % (dep_ns, dep_coll)
         # FIXME hardcoded version
