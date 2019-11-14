@@ -1199,6 +1199,7 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
 
 
 def rewrite_unit_tests(collection_dir, collection, spec, namespace, args):
+    """Rewrite imports and apply patches to unit tests."""
     deps = []
 
     for file_path in itertools.chain.from_iterable(
