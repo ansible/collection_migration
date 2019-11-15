@@ -982,220 +982,233 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
     mark_moved_resources(checkout_path, 'N/A', 'init', {})
 
     seen = {}
-    for namespace in spec.keys():
-        for collection in spec[namespace].keys():
-            import_deps = []
-            docs_deps = []
-            unit_deps = []
 
-            if args.fail_on_core_rewrite:
-                if collection != '_core':
-                    continue
+    is_whitelisted = lambda item: any(
+        whitelisted_str in item
+        for whitelisted_str in args.whitelisted_collections
+    ) if args.whitelisted_collections else lambda _: True
+
+    filtered_collections = (
+        (n, c)
+        for n, ce in spec.items()
+        for c, pe in ce.items()
+        if is_whitelisted('.'.join((n, c)))
+        or any(is_whitelisted(p) for p in pe.values())
+    )
+
+    for namespace, collection in filtered_collections:
+        import_deps = []
+        docs_deps = []
+        unit_deps = []
+
+        if args.fail_on_core_rewrite:
+            if collection != '_core':
+                continue
+        else:
+            if collection.startswith('_'):
+                # these are info only collections
+                continue
+
+        migrated_to_collection = {}
+
+        collection_dir = os.path.join(collections_base_dir, 'ansible_collections', namespace, collection)
+
+        if args.refresh and os.path.exists(collection_dir):
+            shutil.rmtree(collection_dir)
+
+        if not os.path.exists(collection_dir):
+            os.makedirs(collection_dir)
+
+        # create the data for galaxy.yml
+        galaxy_metadata = {
+            'namespace': namespace,
+            'name': collection,
+            'version': '1.0.0',  # TODO: add to spec, args?
+            'readme': None,
+            'authors': None,
+            'description': None,
+            'license': None,
+            'license_file': None,
+            'tags': None,
+            'dependencies': {},
+            'repository': f'git@github.com:{target_github_org}/{namespace}.{collection}.git',
+            'documentation': None,
+            'homepage': None,
+            'issues': None
+        }
+
+        for plugin_type in spec[namespace][collection].keys():
+            plugins = spec[namespace][collection][plugin_type]
+            if not plugins:
+                logger.error('Empty plugin_type: %s in spec for %s.%s' % (plugin_type, namespace, collection))
+                continue
+
+            # get right plugin path
+            if plugin_type not in PLUGIN_EXCEPTION_PATHS:
+                src_plugin_base = os.path.join('lib', 'ansible', 'plugins', plugin_type)
             else:
-                if collection.startswith('_'):
-                    # these are info only collections
+                src_plugin_base = PLUGIN_EXCEPTION_PATHS[plugin_type]
+
+            # ensure destinations exist
+            relative_dest_plugin_base = os.path.join('plugins', plugin_type)
+            dest_plugin_base = os.path.join(collection_dir, relative_dest_plugin_base)
+            if not os.path.exists(dest_plugin_base):
+                os.makedirs(dest_plugin_base)
+                with open(os.path.join(dest_plugin_base, '__init__.py'), 'w') as f:
+                    f.write('')
+
+            # process each plugin
+            for plugin in plugins:
+                if os.path.basename(plugin).startswith('_') and os.path.basename(plugin) != '__init__.py':
+                    logger.error("We should not be migrating deprecated plugins, skipping: %s (%s in %s.%s)" % (plugin, plugin_type, namespace, collection))
                     continue
 
-            migrated_to_collection = {}
+                if os.path.splitext(plugin)[1] in BAD_EXT:
+                    raise Exception("We should not be migrating compiled files: %s" % plugin)
 
-            collection_dir = os.path.join(collections_base_dir, 'ansible_collections', namespace, collection)
-
-            if args.refresh and os.path.exists(collection_dir):
-                shutil.rmtree(collection_dir)
-
-            if not os.path.exists(collection_dir):
-                os.makedirs(collection_dir)
-
-            # create the data for galaxy.yml
-            galaxy_metadata = {
-                'namespace': namespace,
-                'name': collection,
-                'version': '1.0.0',  # TODO: add to spec, args?
-                'readme': None,
-                'authors': None,
-                'description': None,
-                'license': None,
-                'license_file': None,
-                'tags': None,
-                'dependencies': {},
-                'repository': f'git@github.com:{target_github_org}/{namespace}.{collection}.git',
-                'documentation': None,
-                'homepage': None,
-                'issues': None
-            }
-
-            for plugin_type in spec[namespace][collection].keys():
-                plugins = spec[namespace][collection][plugin_type]
-                if not plugins:
-                    logger.error('Empty plugin_type: %s in spec for %s.%s' % (plugin_type, namespace, collection))
-                    continue
-
-                # get right plugin path
-                if plugin_type not in PLUGIN_EXCEPTION_PATHS:
-                    src_plugin_base = os.path.join('lib', 'ansible', 'plugins', plugin_type)
-                else:
-                    src_plugin_base = PLUGIN_EXCEPTION_PATHS[plugin_type]
-
-                # ensure destinations exist
-                relative_dest_plugin_base = os.path.join('plugins', plugin_type)
-                dest_plugin_base = os.path.join(collection_dir, relative_dest_plugin_base)
-                if not os.path.exists(dest_plugin_base):
-                    os.makedirs(dest_plugin_base)
-                    with open(os.path.join(dest_plugin_base, '__init__.py'), 'w') as f:
-                        f.write('')
-
-                # process each plugin
-                for plugin in plugins:
-                    if os.path.basename(plugin).startswith('_') and os.path.basename(plugin) != '__init__.py':
-                        logger.error("We should not be migrating deprecated plugins, skipping: %s (%s in %s.%s)" % (plugin, plugin_type, namespace, collection))
-                        continue
-
-                    if os.path.splitext(plugin)[1] in BAD_EXT:
-                        raise Exception("We should not be migrating compiled files: %s" % plugin)
-
-                    plugin_sig = '%s/%s' % (plugin_type, plugin)
-                    if plugin_sig in seen:
-                        raise ValueError(
-                            'Each plugin needs to be assigned to one collection '
-                            f'only. {plugin_sig} has already been processed as a '
-                            f'part of `{seen[plugin_sig]}` collection.'
-                        )
-                    seen[plugin_sig] = collection
-
-                    # TODO: currently requires 'full name of file', but should work w/o extension?
-                    relative_src_plugin_path = os.path.join(src_plugin_base, plugin)
-                    src = os.path.join(checkout_path, relative_src_plugin_path)
-
-                    remove(src)
-
-                    if plugin_type in ('modules',) and '/' in plugin:
-                        init_py_path = os.path.join(checkout_path, src_plugin_base, os.path.dirname(plugin), '__init__.py')
-                        if os.path.exists(init_py_path):
-                            remove(init_py_path)
-
-                    do_preserve_subdirs = (
-                        (args.preserve_module_subdirs and plugin_type == 'modules')
-                        or plugin_type == 'module_utils'
+                plugin_sig = '%s/%s' % (plugin_type, plugin)
+                if plugin_sig in seen:
+                    raise ValueError(
+                        'Each plugin needs to be assigned to one collection '
+                        f'only. {plugin_sig} has already been processed as a '
+                        f'part of `{seen[plugin_sig]}` collection.'
                     )
-                    plugin_path_chunk = plugin if do_preserve_subdirs else os.path.basename(plugin)
-                    relative_dest_plugin_path = os.path.join(relative_dest_plugin_base, plugin_path_chunk)
+                seen[plugin_sig] = collection
 
-                    migrated_to_collection[relative_src_plugin_path] = relative_dest_plugin_path
+                # TODO: currently requires 'full name of file', but should work w/o extension?
+                relative_src_plugin_path = os.path.join(src_plugin_base, plugin)
+                src = os.path.join(checkout_path, relative_src_plugin_path)
 
-                    dest = os.path.join(collection_dir, relative_dest_plugin_path)
-                    if do_preserve_subdirs:
-                        os.makedirs(os.path.dirname(dest), exist_ok=True)
+                remove(src)
 
-                    if not os.path.exists(src):
-                        raise Exception('Spec specifies "%s" but file "%s" is not found in checkout' % (plugin, src))
+                if plugin_type in ('modules',) and '/' in plugin:
+                    init_py_path = os.path.join(checkout_path, src_plugin_base, os.path.dirname(plugin), '__init__.py')
+                    if os.path.exists(init_py_path):
+                        remove(init_py_path)
 
-                    if os.path.islink(src):
-                        real_src = os.readlink(src)
+                do_preserve_subdirs = (
+                    (args.preserve_module_subdirs and plugin_type == 'modules')
+                    or plugin_type == 'module_utils'
+                )
+                plugin_path_chunk = plugin if do_preserve_subdirs else os.path.basename(plugin)
+                relative_dest_plugin_path = os.path.join(relative_dest_plugin_base, plugin_path_chunk)
 
-                        # remove destination if it already exists
-                        if os.path.exists(dest):
-                            # NOTE: not atomic but should not matter in our script
-                            logger.warning('Removed "%s" as it is target for symlink of "%s"' % (dest, src))
-                            os.remove(dest)
+                migrated_to_collection[relative_src_plugin_path] = relative_dest_plugin_path
 
-                        if real_src.startswith('../'):
-                            target = real_src[3:]
-                            found = False
-                            for k in spec[namespace][collection][plugin_type]:
-                                if k.endswith(target):
-                                    found = True
-                                    break
+                dest = os.path.join(collection_dir, relative_dest_plugin_path)
+                if do_preserve_subdirs:
+                    os.makedirs(os.path.dirname(dest), exist_ok=True)
 
-                            if found:
-                                if plugin_type == 'module_utils':
-                                    target = real_src
-                                else:
-                                    target = os.path.basename(real_src)
-                                ret = os.getcwd()
-                                os.chdir(os.path.dirname(dest))
-                                os.symlink(os.path.basename(target), os.path.basename(dest))
-                                os.chdir(ret)
+                if not os.path.exists(src):
+                    raise Exception('Spec specifies "%s" but file "%s" is not found in checkout' % (plugin, src))
+
+                if os.path.islink(src):
+                    real_src = os.readlink(src)
+
+                    # remove destination if it already exists
+                    if os.path.exists(dest):
+                        # NOTE: not atomic but should not matter in our script
+                        logger.warning('Removed "%s" as it is target for symlink of "%s"' % (dest, src))
+                        os.remove(dest)
+
+                    if real_src.startswith('../'):
+                        target = real_src[3:]
+                        found = False
+                        for k in spec[namespace][collection][plugin_type]:
+                            if k.endswith(target):
+                                found = True
+                                break
+
+                        if found:
+                            if plugin_type == 'module_utils':
+                                target = real_src
                             else:
-                                raise Exception('Found symlink "%s" to target "%s" that is not in same collection.' % (src, target))
+                                target = os.path.basename(real_src)
+                            ret = os.getcwd()
+                            os.chdir(os.path.dirname(dest))
+                            os.symlink(os.path.basename(target), os.path.basename(dest))
+                            os.chdir(ret)
                         else:
-                            shutil.copyfile(src, dest, follow_symlinks=False)
+                            raise Exception('Found symlink "%s" to target "%s" that is not in same collection.' % (src, target))
+                    else:
+                        shutil.copyfile(src, dest, follow_symlinks=False)
 
-                        # dont rewrite symlinks, original file should already be handled
-                        continue
+                    # dont rewrite symlinks, original file should already be handled
+                    continue
 
-                    elif not src.endswith('.py'):
-                        # its not all python files, copy and go to next
-                        # TODO: handle powershell import rewrites
-                        shutil.copyfile(src, dest)
-                        continue
+                elif not src.endswith('.py'):
+                    # its not all python files, copy and go to next
+                    # TODO: handle powershell import rewrites
+                    shutil.copyfile(src, dest)
+                    continue
 
-                    logger.info('Processing %s -> %s' % (src, dest))
+                logger.info('Processing %s -> %s' % (src, dest))
 
-                    deps = rewrite_py(src, dest, collection, spec, namespace, args)
-                    import_deps += deps[0]
-                    docs_deps += deps[1]
+                deps = rewrite_py(src, dest, collection, spec, namespace, args)
+                import_deps += deps[0]
+                docs_deps += deps[1]
 
-                    if args.skip_tests:
-                        continue
+                if args.skip_tests:
+                    continue
 
-                    integration_test_dirs.extend(poor_mans_integration_tests_discovery(checkout_path, plugin_type, plugin))
-                    # process unit tests
-                    unit_tests_migrated_to_collection = copy_unit_tests(
-                        checkout_path, collection_dir,
-                        plugin_type, plugin, spec,
-                    )
-                    migrated_to_collection.update(unit_tests_migrated_to_collection)
-
-            if not args.skip_tests:
-                inject_init_into_tree(
-                    os.path.join(collection_dir, 'tests', 'unit'),
+                integration_test_dirs.extend(poor_mans_integration_tests_discovery(checkout_path, plugin_type, plugin))
+                # process unit tests
+                unit_tests_migrated_to_collection = copy_unit_tests(
+                    checkout_path, collection_dir,
+                    plugin_type, plugin, spec,
                 )
+                migrated_to_collection.update(unit_tests_migrated_to_collection)
 
-                unit_deps += rewrite_unit_tests(collection_dir, collection, spec, namespace, args)
-
-                inject_gitignore_into_tests(collection_dir)
-
-                inject_ignore_into_sanity_tests(
-                    checkout_path, collection_dir, migrated_to_collection,
-                )
-                inject_requirements_into_sanity_tests(checkout_path, collection_dir)
-
-                # FIXME need to hack PyYAML to preserve formatting (not how much it's possible or how much it is work) or use e.g. ruamel.yaml
-                try:
-                    rewrite_integration_tests(integration_test_dirs, checkout_path, collection_dir, namespace, collection, spec, args)
-                except yaml.composer.ComposerError as e:
-                    logger.error(e)
-
-                global integration_tests_deps
-                add_deps_to_metadata(integration_tests_deps.union(import_deps + docs_deps + unit_deps), galaxy_metadata)
-                integration_test_dirs = []
-                integration_tests_deps = set()
-
-            inject_gitignore_into_collection(collection_dir)
-
-            # write collection metadata
-            write_yaml_into_file_as_is(
-                os.path.join(collection_dir, 'galaxy.yml'),
-                galaxy_metadata,
+        if not args.skip_tests:
+            inject_init_into_tree(
+                os.path.join(collection_dir, 'tests', 'unit'),
             )
 
-            # init git repo
-            subprocess.check_call(('git', 'init'), cwd=collection_dir)
-            subprocess.check_call(('git', 'add', '.'), cwd=collection_dir)
-            subprocess.check_call(
-                ('git', 'commit', '-m', 'Initial commit', '--allow-empty'),
-                cwd=collection_dir,
+            unit_deps += rewrite_unit_tests(collection_dir, collection, spec, namespace, args)
+
+            inject_gitignore_into_tests(collection_dir)
+
+            inject_ignore_into_sanity_tests(
+                checkout_path, collection_dir, migrated_to_collection,
             )
+            inject_requirements_into_sanity_tests(checkout_path, collection_dir)
 
-            mark_moved_resources(
-                checkout_path, namespace, collection, migrated_to_collection,
-            )
+            # FIXME need to hack PyYAML to preserve formatting (not how much it's possible or how much it is work) or use e.g. ruamel.yaml
+            try:
+                rewrite_integration_tests(integration_test_dirs, checkout_path, collection_dir, namespace, collection, spec, args)
+            except yaml.composer.ComposerError as e:
+                logger.error(e)
 
-            if args.move_plugins:
-                actually_remove(checkout_path, namespace, collection)
+            global integration_tests_deps
+            add_deps_to_metadata(integration_tests_deps.union(import_deps + docs_deps + unit_deps), galaxy_metadata)
+            integration_test_dirs = []
+            integration_tests_deps = set()
 
-            global REMOVE
-            REMOVE = set()
+        inject_gitignore_into_collection(collection_dir)
+
+        # write collection metadata
+        write_yaml_into_file_as_is(
+            os.path.join(collection_dir, 'galaxy.yml'),
+            galaxy_metadata,
+        )
+
+        # init git repo
+        subprocess.check_call(('git', 'init'), cwd=collection_dir)
+        subprocess.check_call(('git', 'add', '.'), cwd=collection_dir)
+        subprocess.check_call(
+            ('git', 'commit', '-m', 'Initial commit', '--allow-empty'),
+            cwd=collection_dir,
+        )
+
+        mark_moved_resources(
+            checkout_path, namespace, collection, migrated_to_collection,
+        )
+
+        if args.move_plugins:
+            actually_remove(checkout_path, namespace, collection)
+
+        global REMOVE
+        REMOVE = set()
 
 
 def rewrite_unit_tests(collection_dir, collection, spec, namespace, args):
@@ -1760,6 +1773,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--spec', required=True, dest='spec_dir',
                         help='A directory spec with YAML files that describe how to organize collections')
+    parser.add_argument(
+        '-o', '--only',
+        dest='whitelisted_collections',
+        action='append',
+        help='limit migration to these substrings their dependencies',
+    )
     parser.add_argument('-r', '--refresh', action='store_true', dest='refresh', default=False,
                         help='force refreshing local Ansible checkout')
     parser.add_argument('-t', '--target-dir', dest='vardir', default=VARDIR,
