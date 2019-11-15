@@ -984,6 +984,16 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
     seen = {}
     for namespace in spec.keys():
         for collection in spec[namespace].keys():
+
+            if args.filters:
+                filtered = True
+                for filterstring in args.filters:
+                    if filterstring in namespace or filterstring in collection:
+                        filtered = False
+                if filtered:
+                    logger.info('skipping %s.%s due to filters' % (namespace, collection))
+                    continue
+
             import_deps = []
             docs_deps = []
             unit_deps = []
@@ -1760,6 +1770,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--spec', required=True, dest='spec_dir',
                         help='A directory spec with YAML files that describe how to organize collections')
+    parser.add_argument('--filter', dest='filters', action='append',
+                        help='limit migration to these substrings their dependencies')
     parser.add_argument('-r', '--refresh', action='store_true', dest='refresh', default=False,
                         help='force refreshing local Ansible checkout')
     parser.add_argument('-t', '--target-dir', dest='vardir', default=VARDIR,
