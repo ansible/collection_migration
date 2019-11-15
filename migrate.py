@@ -965,6 +965,27 @@ def copy_unit_tests(checkout_path, collection_dir, plugin_type, plugin, spec):
     return copy_map
 
 
+def match_substrings(namespace, collection, plugins, substrings):
+
+    """Is this namespace or collection or set of files inclusive of the limits?"""
+
+    matched = False
+    for st in substrings:
+        if st in namespace or st in collection:
+            matched = True
+            break
+
+    if not matched:
+        for plugins in plugins.values():
+            for plugin in plugins:
+                for st in substrings:
+                    if st in plugin:
+                        matched = True
+                        break
+
+    return matched
+
+
 # ===== MAKE COLLECTIONS =====
 def assemble_collections(checkout_path, spec, args, target_github_org):
     # NOTE releases_dir is already created by checkout_repo(), might want to move all that to something like ensure_dirs() ...
@@ -985,14 +1006,13 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
     for namespace in spec.keys():
         for collection in spec[namespace].keys():
 
-            if args.filters:
-                filtered = True
-                for filterstring in args.filters:
-                    if filterstring in namespace or filterstring in collection:
-                        filtered = False
-                if filtered:
-                    logger.info('skipping %s.%s due to filters' % (namespace, collection))
-                    continue
+            if args.limits and not match_substrings(namespace, collection, spec[namespace][collection], args.limits):
+                logger.info('skipping %s.%s due to limits' % (namespace, collection))
+                continue
+
+            if args.filters and match_substrings(namespace, collection, spec[namespace][collection], args.filters):
+                logger.info('skipping %s.%s due to filters' % (namespace, collection))
+                continue
 
             import_deps = []
             docs_deps = []
@@ -1770,8 +1790,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--spec', required=True, dest='spec_dir',
                         help='A directory spec with YAML files that describe how to organize collections')
-    parser.add_argument('--filter', dest='filters', action='append',
+    parser.add_argument('--limit', dest='limits', action='append',
                         help='limit migration to these substrings their dependencies')
+    parser.add_argument('--filter', dest='filters', action='append',
+                        help='exclude these substrings from migration')
     parser.add_argument('-r', '--refresh', action='store_true', dest='refresh', default=False,
                         help='force refreshing local Ansible checkout')
     parser.add_argument('-t', '--target-dir', dest='vardir', default=VARDIR,
