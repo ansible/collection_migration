@@ -176,6 +176,7 @@ class StatusQuo:
         for ltup in zip(paths, paths[1:]):
             thistopic = '.'.join(ltup)
             if thistopic in self.topics:
+                logger.debug('A. %s --> %s' % (filename, thistopic))
                 return thistopic
 
         # match on similar filenames
@@ -183,7 +184,7 @@ class StatusQuo:
             if not pf[2]:
                 continue
             if os.path.basename(pf[-1]).replace('.py', '') == bn:
-                logger.debug('A. %s --> %s' % (filename, pf[2]))
+                logger.debug('B. %s --> %s' % (filename, pf[2]))
                 #if 'fortios' in filename:
                 #    import epdb; epdb.st()
                 return pf[2]
@@ -194,7 +195,7 @@ class StatusQuo:
                 continue
             xdn = os.path.basename(os.path.dirname(pf[-1]))
             if xdn == bn:
-                logger.debug('A(1). %s --> %s' % (filename, pf[2]))
+                logger.debug('C. %s --> %s' % (filename, pf[2]))
                 #if 'fortios' in filename:
                 #    import epdb; epdb.st()
                 return pf[2]
@@ -216,7 +217,9 @@ class StatusQuo:
         fparts[-1] = fparts[-1].split('.')[0]
         for part in fparts[::-1]:
             if part in self.topics:
+                logger.debug('D. %s --> %s' % (filename, pf[2]))
                 return part
+
         for part in fparts[::-1]:
             for topic in self.topics:
                 if not '.' in topic:
@@ -226,7 +229,9 @@ class StatusQuo:
                     #if 'fortios' in filename:
                     #    import epdb; epdb.st()
 
+                    logger.debug('E. %s --> %s' % (filename, pf[2]))
                     return topic
+
         for part in fparts[::-1]:
             if part in self.synonyms:
                 syn = self.synonyms[part]
@@ -235,7 +240,9 @@ class StatusQuo:
                     #if 'fortios' in filename:
                     #    import epdb; epdb.st()
 
+                    logger.debug('F. %s --> %s' % (filename, pf[2]))
                     return syn
+
         for part in fparts[::-1]:
             if part in self.synonyms:
                 syn = self.synonyms[part]
@@ -247,6 +254,7 @@ class StatusQuo:
                         #if 'fortios' in filename:
                         #    import epdb; epdb.st()
 
+                        logger.debug('G. %s --> %s' % (filename, pf[2]))
                         return topic
 
         # is this a _ delimited name?
@@ -259,7 +267,7 @@ class StatusQuo:
                 if '_' in xbn:
                     xbn = xbn.split('_')[0]
                 if xbn == _bn:
-                    logger.debug('A(3). %s --> %s' % (filename, pf[2]))
+                    logger.debug('H. %s --> %s' % (filename, pf[2]))
                     return pf[2]
 
         # fill in topics via synonyms
@@ -272,18 +280,18 @@ class StatusQuo:
                 if a in bn:
 
                     if not '.' in x[2] and b == x[2]:
-                        logger.debug('B. %s --> %s' % (filename, x[2]))
+                        logger.debug('I. %s --> %s' % (filename, x[2]))
                         return x[2]
                     elif x[2].endswith(bn):
-                        logger.debug('C. %s --> %s' % (filename, x[2]))
+                        logger.debug('J. %s --> %s' % (filename, x[2]))
                         return x[2]
                     elif os.path.dirname(x[-1]).endswith(b):
-                        logger.debug('D. %s --> %s' % (filename, x[2]))
+                        logger.debug('K. %s --> %s' % (filename, x[2]))
                         return x[2]
 
                     xdn = x[-1].replace(self.checkout_dir + '/', '')
                     if b in xdn:
-                        logger.debug('E. %s --> %s' % (filename, x[2]))
+                        logger.debug('L. %s --> %s' % (filename, x[2]))
                         return x[2]
                     #import epdb; epdb.st()
 
@@ -340,7 +348,8 @@ class StatusQuo:
         for idx,x in enumerate(self.pluginfiles):
             if x[2]:
                 continue
-            self.pluginfiles[idx][2] = self._guess_topic(x[-1])
+            topic = self._guess_topic(x[-1])
+            self.pluginfiles[idx][2] = topic
 
         # find which modules use orphaned doc fragments
         for idx,x in enumerate(self.pluginfiles):
@@ -361,6 +370,13 @@ class StatusQuo:
                 logger.info('%s dirs' % len(dirnames))
 
         self.orphaned = [x for x in self.pluginfiles if not x[-2]]
+
+        '''
+        for idx,x in enumerate(self.pluginfiles):
+            if x[2] and '.' not in x[2]:
+                self.pluginfiles[2] = x[2] + '.misc'
+                #import epdb; epdb.st()
+        '''
 
     def make_spec(self):
         topics = self.topics[:]
@@ -399,7 +415,8 @@ class StatusQuo:
             elif 'contrib/inventory' in spec_path:
                 spec_path = os.path.join('contrib', 'inventory', os.path.basename(spec_path))
             else:
-                import epdb; epdb.st()
+                #import epdb; epdb.st()
+                continue
             
             #self.collections[topic][ptype].append(x[1])
             self.collections[topic][ptype].append(spec_path)
