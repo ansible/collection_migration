@@ -59,6 +59,7 @@ class StatusQuo:
         'f5_utils': 'f5',
         'gcdns': 'google',
         'gce': 'google',
+        'gcp_compute': 'google',
         'gcp': 'google',
         'hashi_vault': 'identity',
         'chef_databag': 'identity',
@@ -113,7 +114,7 @@ class StatusQuo:
         #'utm': 'sophos_utm',
         'vagrant': 'cloud',
         'vca': 'vmware',
-        #'virtualbox': 'cloud.misc',
+        'virtualbox': 'cloud',
         #'vbox': 'cloud.misc',
 
         'win': 'windows',
@@ -167,6 +168,10 @@ class StatusQuo:
         if bn == 'database':
             return 'database.misc'
 
+        # don't lump all facts into network
+        if '/facts/' in filename and 'module_utils/network' not in filename:
+            return None
+
         # does the filepath contain a topic?
         paths = filename.replace(self.checkout_dir + '/', '')
         paths = paths.replace('lib/ansible/', '')
@@ -179,15 +184,41 @@ class StatusQuo:
                 logger.debug('A. %s --> %s' % (filename, thistopic))
                 return thistopic
 
-        # match on similar filenames
-        for pf in self.pluginfiles:
-            if not pf[2]:
+        # fill in topics via synonyms
+        for idx,x in enumerate(self.pluginfiles):
+
+            if not x[2]:
                 continue
-            if os.path.basename(pf[-1]).replace('.py', '') == bn:
-                logger.debug('B. %s --> %s' % (filename, pf[2]))
-                #if 'fortios' in filename:
-                #    import epdb; epdb.st()
-                return pf[2]
+
+            for a,b in self.synonyms.items():
+                if a in bn:
+
+                    if not '.' in x[2] and b == x[2]:
+                        logger.debug('I. %s --> %s' % (filename, x[2]))
+                        return x[2]
+                    elif x[2].endswith(bn):
+                        logger.debug('J. %s --> %s' % (filename, x[2]))
+                        return x[2]
+                    elif os.path.dirname(x[-1]).endswith(b):
+                        logger.debug('K. %s --> %s' % (filename, x[2]))
+                        return x[2]
+
+                    xdn = x[-1].replace(self.checkout_dir + '/', '')
+                    if b in xdn:
+                        logger.debug('L. %s --> %s' % (filename, x[2]))
+                        return x[2]
+                    #import epdb; epdb.st()
+
+        # match on similar filenames
+        if bn not in ['common']:
+            for pf in self.pluginfiles:
+                if not pf[2]:
+                    continue
+                if os.path.basename(pf[-1]).replace('.py', '') == bn:
+                    logger.debug('B. %s --> %s' % (filename, pf[2]))
+                    #if 'fortios' in filename:
+                    #    import epdb; epdb.st()
+                    return pf[2]
 
         # match basename to similar dirname
         for pf in self.pluginfiles:
@@ -199,18 +230,6 @@ class StatusQuo:
                 #if 'fortios' in filename:
                 #    import epdb; epdb.st()
                 return pf[2]
-
-        '''
-        # match similar dirname to similar dirname
-        fdn = os.path.basename(os.path.dirname(filename))
-        for pf in self.pluginfiles:
-            if not pf[2]:
-                continue
-            xdn = os.path.basename(os.path.dirname(pf[-1]))
-            if fdn == xdn:
-                logger.debug('A(2). %s --> %s' % (filename, pf[2]))
-                return pf[2]
-        '''
 
         # use path segments to match
         fparts = filename.split('/')
@@ -225,10 +244,6 @@ class StatusQuo:
                 if not '.' in topic:
                     continue
                 if topic.startswith(part + '.') or topic.endswith('.' + part):
-
-                    #if 'fortios' in filename:
-                    #    import epdb; epdb.st()
-
                     logger.debug('E. %s --> %s' % (filename, pf[2]))
                     return topic
 
@@ -236,10 +251,6 @@ class StatusQuo:
             if part in self.synonyms:
                 syn = self.synonyms[part]
                 if syn in self.topics:
-
-                    #if 'fortios' in filename:
-                    #    import epdb; epdb.st()
-
                     logger.debug('F. %s --> %s' % (filename, pf[2]))
                     return syn
 
@@ -250,10 +261,6 @@ class StatusQuo:
                     if not '.' in topic:
                         continue
                     if topic.startswith(syn + '.') or topic.endswith('.' + syn):
-
-                        #if 'fortios' in filename:
-                        #    import epdb; epdb.st()
-
                         logger.debug('G. %s --> %s' % (filename, pf[2]))
                         return topic
 
@@ -300,6 +307,8 @@ class StatusQuo:
 
     def get_plugins(self):
 
+        self.topics = set()
+
         # enumerate the modules
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'modules')
         for dirName, subdirList, fileList in os.walk(root):
@@ -310,11 +319,11 @@ class StatusQuo:
                 topic = os.path.relpath(fp, root)
                 topic = os.path.dirname(topic)
                 topic = topic.replace('/', '.')
-
+                self.topics.add(topic)
                 self.pluginfiles.append(['modules', fn, topic, fp])
 
         # make a list of unique topics
-        self.topics = sorted(set(x[2] for x in self.pluginfiles))
+        self.topics = list(self.topics)
 
         # enumerate the module utils
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'module_utils')
@@ -322,7 +331,8 @@ class StatusQuo:
 
             for fn in set(fileList) - {'__init__.py', 'loader.py'}:
                 fp = os.path.join(dirName, fn)
-                topic = self._guess_topic(fp)
+                #topic = self._guess_topic(fp)
+                topic = None
                 self.pluginfiles.append(['module_utils', fn, topic, fp])
 
         # enumerate all the other plugins
@@ -341,7 +351,8 @@ class StatusQuo:
             for fn in fileList:
                 fp = os.path.join(dirName, fn)
                 bn = os.path.basename(fn).replace('.py', '').replace('.ini', '')
-                topic = self._guess_topic(fp)
+                #topic = self._guess_topic(fp)
+                topic = None
                 self.pluginfiles.append([ptype, fn, topic, fp])
 
         # guess the rest 
@@ -349,7 +360,15 @@ class StatusQuo:
             if x[2]:
                 continue
             topic = self._guess_topic(x[-1])
+            if topic and topic.endswith('.misc'):
+                self.pluginfiles[idx][2] = topic
+        for idx,x in enumerate(self.pluginfiles):
+            if x[2]:
+                continue
+            topic = self._guess_topic(x[-1])
             self.pluginfiles[idx][2] = topic
+            if 'podman' in x[-1]:
+                import epdb; epdb.st()
 
         # find which modules use orphaned doc fragments
         for idx,x in enumerate(self.pluginfiles):
@@ -359,7 +378,8 @@ class StatusQuo:
                 continue
             df = os.path.basename(x[-1])
             df = df.replace('.py', '')
-            cmd = 'find %s -type f | xargs fgrep -iH %s' % (os.path.join(self.checkout_dir, 'lib', 'ansible', 'modules'), df)
+            cmd = 'find %s -type f | xargs fgrep -iH %s' % \
+                (os.path.join(self.checkout_dir, 'lib', 'ansible', 'modules'), df)
             with contextlib.suppress(subprocess.CalledProcessError):
                 filenames = subprocess.check_output(cmd, shell=True, text=True).split('\n')
                 filenames = [x.split(':')[0] for x in filenames if x]
@@ -370,13 +390,6 @@ class StatusQuo:
                 logger.info('%s dirs' % len(dirnames))
 
         self.orphaned = [x for x in self.pluginfiles if not x[-2]]
-
-        '''
-        for idx,x in enumerate(self.pluginfiles):
-            if x[2] and '.' not in x[2]:
-                self.pluginfiles[2] = x[2] + '.misc'
-                #import epdb; epdb.st()
-        '''
 
     def make_spec(self):
         topics = self.topics[:]
@@ -434,7 +447,11 @@ class StatusQuo:
         os.makedirs('status_quo')
 
         namespaces = {}
-        for k,v in self.collections.items():
+        keys = self.collections.keys()
+        keys = sorted(keys)
+        #for k,v in self.collections.items():
+        for k in keys:
+            v = self.collections[k]
             if '.' not in k:
                 continue
             namespace = k.split('.')[0]
