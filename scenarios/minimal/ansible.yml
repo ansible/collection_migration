@@ -147,7 +147,7 @@ _core:
     - files/lineinfile.py
     - files/patch.py
     - files/replace.py
-    - files/stat.pyi
+    - files/stat.py
     - files/tempfile.py
     - files/template.py
     - inventory/add_host.py
