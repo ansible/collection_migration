@@ -22,7 +22,12 @@ _core:
     - uri.py
     - yum.py
     - wait_for_connection.py
+    - win_copy
+    - win_reboot
+    - win_template
+    # - win_updates - not sure on this one
     become:
+    - runas.py
     - su.py
     - sudo.py
     cache:
@@ -41,6 +46,7 @@ _core:
     - local.py
     - paramiko_ssh.py
     - ssh.py
+    - winrm.py
     doc_fragments:
     - backup.py
     - constructed.py
@@ -50,7 +56,10 @@ _core:
     - inventory_cache.py
     - return_common.py
     - shell_common.py
+    - shell_windows.py
+    - template_common.py
     - url.py
+    - url_windows.py
     - vars_plugins_staging.py
     - validate.py
     filter:
@@ -99,6 +108,7 @@ _core:
     - common/text/*
     - compat/__init__.py
     - compat/paramiko.py
+    - csharp/*
     - distro/__init__.py
     - facts/__init__.py
     - facts/ansible_collector.py
@@ -117,6 +127,7 @@ _core:
     - facts/virtual/*
     - json_utils.py
     - parsing/*
+    - powershell/*
     - service.py
     - splitter.py
     - six/*
@@ -136,7 +147,8 @@ _core:
     - files/lineinfile.py
     - files/patch.py
     - files/replace.py
-    - files/stat.py
+    - files/stat.pyi
+    - files/tempfile.py
     - files/template.py
     - inventory/add_host.py
     - inventory/group_by.py
@@ -198,7 +210,71 @@ _core:
     - utilities/logic/set_stats.py
     - utilities/logic/wait_for.py
     - utilities/logic/wait_for_connection.py
+    - windows/async_status.ps1
+    - windows/setup.ps1
+    - windows/slurp.ps1
+    # - windows/win_acl.ps1
+    # - windows/win_acl.py
+    # - windows/win_acl_inheritance.ps1
+    # - windows/win_acl_inheritance.py
+    - windows/win_command.ps1
+    - windows/win_command.py
+    - windows/win_copy.ps1
+    - windows/win_copy.py
+    # - windows/win_dsc.ps1
+    # - windows/win_dsc.py
+    # - windows/win_environment.ps1
+    # - windows/win_environment.py
+    - windows/win_feature.ps1
+    - windows/win_feature.py
+    - windows/win_find.ps1
+    - windows/win_find.py
+    - windows/win_file.ps1
+    - windows/win_file.py
+    - windows/win_get_url.ps1
+    - windows/win_get_url.py
+    - windows/win_group.ps1
+    - windows/win_group.py
+    - windows/win_group_membership.ps1
+    - windows/win_group_membership.py
+    - windows/win_hostname.ps1
+    - windows/win_hostname.py
+    - windows/win_lineinfile.ps1
+    - windows/win_lineinfile.py
+    # - windows/win_owner.ps1
+    # - windows/win_owner.py
+    - windows/win_package.ps1
+    - windows/win_package.py
+    # - windows/win_path.ps1
+    # - windows/win_path.py
+    - windows/win_ping.ps1
+    - windows/win_ping.py
+    - windows/win_reboot.py
+    - windows/win_reg_stat.ps1
+    - windows/win_reg_stat.py
+    - windows/win_regedit.ps1
+    - windows/win_regedit.py
+    - windows/win_service.ps1
+    - windows/win_service.py
+    - windows/win_shell.ps1
+    - windows/win_shell.py
+    - windows/win_stat.ps1
+    - windows/win_stat.py
+    - windows/win_tempfile.ps1
+    - windows/win_tempfile.py
+    - windows/win_template.py
+    - windows/win_timezone.ps1
+    - windows/win_timezone.py
+    # - windows/win_updates.ps1
+    # - windows/win_updates.py
+    - windows/win_uri.ps1
+    - windows/win_uri.py
+    - windows/win_user.ps1
+    - windows/win_user.py
+    - windows/win_wait_for.ps1
+    - windows/win_wait_for.py
     shell:
+    - cmd.py
     - powershell.py
     - sh.py
     strategy:
