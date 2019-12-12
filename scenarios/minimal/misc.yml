@@ -995,13 +995,19 @@ glob:
     - network/cloudengine/ce_interface.py
     - network/cloudengine/ce_interface_ospf.py
     - network/cloudengine/ce_ip_interface.py
+    - network/cloudengine/ce_is_is_instance.py
+    - network/cloudengine/ce_is_is_interface.py
+    - network/cloudengine/ce_is_is_view.py
     - network/cloudengine/ce_lacp.py
     - network/cloudengine/ce_link_status.py
     - network/cloudengine/ce_lldp.py
     - network/cloudengine/ce_lldp_interface.py
+    - network/cloudengine/ce_mdn_interface.py
     - network/cloudengine/ce_mlag_config.py
     - network/cloudengine/ce_mlag_interface.py
     - network/cloudengine/ce_mtu.py
+    - network/cloudengine/ce_multicast_global.py
+    - network/cloudengine/ce_multicast_igmp_enable.py
     - network/cloudengine/ce_netconf.py
     - network/cloudengine/ce_netstream_aging.py
     - network/cloudengine/ce_netstream_export.py
@@ -2842,12 +2848,6 @@ glob:
     - network/checkpoint/checkpoint.py
     - network/cloudengine/__init__.py
     - network/cloudengine/ce.py
-    - network/cloudengine/ce_is_is_instance.py
-    - network/cloudengine/ce_is_is_view.py
-    - network/cloudengine/ce_is_is_interface.py
-    - network/cloudengine/ce_mdn_interface.py
-    - network/cloudengine/ce_multicast_igmp_enable.py
-    - network/cloudengine/ce_multicast_global.py
     - network/cnos/__init__.py
     - network/cnos/cnos.py
     - network/cnos/cnos_devicerules.py
@@ -3454,3 +3454,4 @@ glob:
     - vmware_spbm.py
     - vultr.py
     - xenserver.py
+    
