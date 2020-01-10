@@ -1812,9 +1812,8 @@ def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args, d
                     translate.append((new_module_name, key))
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
-        plugin_type = KEYWORDS_TO_PLUGIN_MAP.get(key)
-        if plugin_type is not None:
-            _rewrite_yaml_mapping_value(namespace, collection, el, key, plugin_type, spec, args, dest)
+        if key in KEYWORDS_TO_PLUGIN_MAP:
+            _rewrite_yaml_mapping_value(namespace, collection, el, key, KEYWORDS_TO_PLUGIN_MAP[key], spec, args, dest)
 
     for new_key, old_key in translate:
         el[new_key] = el.pop(old_key)
