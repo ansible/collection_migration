@@ -1752,7 +1752,7 @@ def _rewrite_yaml_mapping(el, namespace, collection, spec, args, dest):
     assert isinstance(el, Mapping)
 
     _rewrite_yaml_mapping_keys_vars(el, namespace, collection, spec, args, dest)
-    _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args)
+    _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args, dest)
     _rewrite_yaml_mapping_values(el, namespace, collection, spec, args, dest)
 
 
@@ -1765,7 +1765,7 @@ KEYWORDS_TO_PLUGIN_MAP = {
 }
 
 
-def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args):
+def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args, dest):
     translate = []
     for key in el.keys():
         if key not in KEYWORDS_TO_PLUGIN_MAP and is_reserved_name(key):
@@ -1814,13 +1814,13 @@ def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args):
 
         plugin_type = KEYWORDS_TO_PLUGIN_MAP.get(key)
         if plugin_type is not None:
-            _rewrite_yaml_mapping_value(namespace, collection, el, key, plugin_type, spec, args)
+            _rewrite_yaml_mapping_value(namespace, collection, el, key, plugin_type, spec, args, dest)
 
     for new_key, old_key in translate:
         el[new_key] = el.pop(old_key)
 
 
-def _rewrite_yaml_mapping_value(namespace, collection, el, key, plugin_type, spec, args):
+def _rewrite_yaml_mapping_value(namespace, collection, el, key, plugin_type, spec, args, dest):
     try:
         plugin_namespace, plugin_collection = get_plugin_collection(el[key], plugin_type, spec)
     except LookupError:
@@ -1853,7 +1853,7 @@ def _rewrite_yaml_mapping_keys_vars(el, namespace, collection, spec, args, dest)
         plugin_type = VARNAMES_TO_PLUGIN_MAP.get(key)
         if plugin_type is None:
             continue
-        _rewrite_yaml_mapping_value(namespace, collection, el, key, plugin_type, spec, args)
+        _rewrite_yaml_mapping_value(namespace, collection, el, key, plugin_type, spec, args, dest)
 
 
 def _rewrite_yaml_mapping_values(el, namespace, collection, spec, args, dest):
@@ -1862,7 +1862,7 @@ def _rewrite_yaml_mapping_values(el, namespace, collection, spec, args, dest):
             if key == 'vars':
                 _rewrite_yaml_mapping_keys_vars(el[key], namespace, collection, spec, args, dest)
             if key != 'vars':
-                _rewrite_yaml_mapping_keys_non_vars(el[key], namespace, collection, spec, args)
+                _rewrite_yaml_mapping_keys_non_vars(el[key], namespace, collection, spec, args, dest)
         elif isinstance(value, list):
             for idx, item in enumerate(value):
                 if isinstance(item, Mapping):
