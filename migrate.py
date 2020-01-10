@@ -1823,20 +1823,22 @@ def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args):
 def _rewrite_yaml_mapping_value(namespace, collection, el, key, plugin_type, spec, args):
     try:
         plugin_namespace, plugin_collection = get_plugin_collection(el[key], plugin_type, spec)
-        if plugin_collection in COLLECTION_SKIP_REWRITE:
-            return
-        new_plugin_name = get_plugin_fqcn(plugin_namespace, plugin_collection, el[key])
-
-        msg = 'Rewriting to %s' % new_plugin_name
-        if args.fail_on_core_rewrite:
-            raise RuntimeError(msg)
-
-        logger.debug(msg)
-        el[key] = new_plugin_name
-        integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
     except LookupError:
         if '{{' in el[key]:
             add_manual_check(key, el[key], dest)
+        return
+
+    if plugin_collection in COLLECTION_SKIP_REWRITE:
+        return
+    new_plugin_name = get_plugin_fqcn(plugin_namespace, plugin_collection, el[key])
+
+    msg = 'Rewriting to %s' % new_plugin_name
+    if args.fail_on_core_rewrite:
+        raise RuntimeError(msg)
+
+    logger.debug(msg)
+    el[key] = new_plugin_name
+    integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
 
 
 VARNAMES_TO_PLUGIN_MAP = {
