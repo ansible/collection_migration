@@ -1849,10 +1849,8 @@ VARNAMES_TO_PLUGIN_MAP = {
 
 def _rewrite_yaml_mapping_keys_vars(el, namespace, collection, spec, args, dest):
     for key in el.keys():
-        plugin_type = VARNAMES_TO_PLUGIN_MAP.get(key)
-        if plugin_type is None:
-            continue
-        _rewrite_yaml_mapping_value(namespace, collection, el, key, plugin_type, spec, args, dest)
+        if key in VARNAMES_TO_PLUGIN_MAP:
+            _rewrite_yaml_mapping_value(namespace, collection, el, key, VARNAMES_TO_PLUGIN_MAP[key], spec, args, dest)
 
 
 def _rewrite_yaml_mapping_values(el, namespace, collection, spec, args, dest):
