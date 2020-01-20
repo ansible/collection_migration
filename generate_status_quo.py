@@ -124,7 +124,8 @@ class StatusQuo:
         'vmware': 'cloud.vmware',
         #'yum': 'packaging.os',
         #'zabbix': 'monitoring.zabbix'
-        'yumdnf': 'packaging',
+
+        'yumdnf': 'packaging.os',
     }
 
     def __init__(self):
