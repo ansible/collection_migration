@@ -365,10 +365,13 @@ class StatusQuo:
         for idx,x in enumerate(self.pluginfiles):
             if x[2]:
                 continue
+            
+            # this screws everything up ...
+            if x[-1] == 'common.py':
+                continue
+
             topic = self._guess_topic(x[-1])
             self.pluginfiles[idx][2] = topic
-            if 'podman' in x[-1]:
-                import epdb; epdb.st()
 
         # find which modules use orphaned doc fragments
         for idx,x in enumerate(self.pluginfiles):
