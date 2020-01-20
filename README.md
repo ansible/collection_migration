@@ -106,9 +106,8 @@ structured, and distributed.
 
 stdlib
 : The bare essentials needed to make Ansible functional, while providing
-  limited to no ability to perform work against a target host. This will
-  largely be a release or distribution with little to no plugins or
-  modules.
+  no ability to perform work against a target host. This will largely be
+  a release or distribution with little to no plugins or modules.
   
 base
 : This uses stdlib as it's foundation, while also including a small number
