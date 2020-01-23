@@ -513,9 +513,9 @@ class StatusQuo:
             for ptype, pfiles in v.items():
                 self.collections[k][ptype] = sorted(pfiles)
 
-        if os.path.exists('status_quo'):
-            shutil.rmtree('status_quo')
-        os.makedirs('status_quo')
+        if os.path.exists('scenarios/status_quo'):
+            shutil.rmtree('scenarios/status_quo')
+        os.makedirs('scenarios/status_quo')
 
         namespaces = {}
         keys = self.collections.keys()
@@ -532,7 +532,7 @@ class StatusQuo:
             namespaces[namespace][name] = copy.deepcopy(v)
 
         for namespace,names in namespaces.items():
-            fn = os.path.join('status_quo', namespace + '.yml')
+            fn = os.path.join('scenarios', 'status_quo', namespace + '.yml')
             with open(fn, 'w') as f:
                 ruamel.yaml.dump(names, f, Dumper=ruamel.yaml.RoundTripDumper)
 
