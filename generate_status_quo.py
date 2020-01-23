@@ -22,6 +22,12 @@ from sh import git
 from sh import find
 
 
+def captured_return(result, **kwargs):
+    #if 'filename' in kwargs and 'sumo' in kwargs['filename']:
+    #    import epdb; epdb.st()
+    return result
+
+
 
 class StatusQuo:
 
@@ -30,6 +36,20 @@ class StatusQuo:
     pluginfiles = None
     orphaned = None
     topics = None
+
+    static_namespaces = [
+        'monitoring.logstash',
+        'monitoring.logdna',
+        'monitoring.nagios',
+        'monitoring.sumologic',
+    ]
+
+    static_mappings = {
+        'logdna': 'monitoring.misc',
+        'logstash': 'monitoring.misc',
+        'sumologic': 'monitoring.misc',
+        'nrdp': 'monitoring.misc',
+    }
 
     synonyms = {
         'alicloud_ecs': 'alicloud',
@@ -64,7 +84,11 @@ class StatusQuo:
         'hashi_vault': 'identity',
         'chef_databag': 'identity',
         'lastpass': 'identity',
-        'logdna': 'monitoring',
+        #'logdna': 'monitoring.foo',
+        'logstash': 'monitoring.logstash',
+        #'sumologic': 'monitoring.foo',
+        'nrdp': 'nagios',
+        #'logdna.py': 'monitoring.misc',
         'hetzner': 'hcloud',
         'hiera': 'puppet',
         'hwc': 'huawei',
@@ -158,12 +182,17 @@ class StatusQuo:
             git.pull('--rebase', _cwd=self.checkout_dir)
 
     def _guess_topic(self, filename):
+
+        #if 'sumo' in filename:
+        #    import epdb; epdb.st()
+
         bn = os.path.basename(filename)
         bn = bn.replace('.py', '').replace('.ini', '')
 
         # workaround for everything depending on aws
         if bn == 'core' and 'aws' not in filename:
-            return 'utilities.misc'
+            #return 'utilities.misc'
+            return captured_return('utilities.misc', filename=filename)
 
         # workaround for mu/database.py ending up in aerospike
         if bn == 'database':
@@ -171,7 +200,9 @@ class StatusQuo:
 
         # don't lump all facts into network
         if '/facts/' in filename and 'module_utils/network' not in filename:
-            return None
+            #return None
+            return captured_return(None, filename=filename)
+            
 
         # does the filepath contain a topic?
         paths = filename.replace(self.checkout_dir + '/', '')
@@ -183,7 +214,8 @@ class StatusQuo:
             thistopic = '.'.join(ltup)
             if thistopic in self.topics:
                 logger.debug('A. %s --> %s' % (filename, thistopic))
-                return thistopic
+                #return thistopic
+                return captured_return(thistopic, filename=filename)
 
         # fill in topics via synonyms
         for idx,x in enumerate(self.pluginfiles):
@@ -196,19 +228,27 @@ class StatusQuo:
 
                     if not '.' in x[2] and b == x[2]:
                         logger.debug('I. %s --> %s' % (filename, x[2]))
-                        return x[2]
+                        #return x[2]
+                        return captured_return(x[2], filename=filename)
                     elif x[2].endswith(bn):
                         logger.debug('J. %s --> %s' % (filename, x[2]))
-                        return x[2]
+                        #return x[2]
+                        return captured_return(x[2], filename=filename)
                     elif os.path.dirname(x[-1]).endswith(b):
                         logger.debug('K. %s --> %s' % (filename, x[2]))
-                        return x[2]
+                        #return x[2]
+                        return captured_return(x[2], filename=filename)
 
+                    '''
                     xdn = x[-1].replace(self.checkout_dir + '/', '')
                     if b in xdn:
                         logger.debug('L. %s --> %s' % (filename, x[2]))
-                        return x[2]
+                        if 'sumo' in filename:
+                            import epdb; epdb.st()
+                        #return x[2]
+                        captured_return(x[2], filename=filename)
                     #import epdb; epdb.st()
+                    '''
 
         # match on similar filenames
         if bn not in ['common']:
@@ -219,7 +259,8 @@ class StatusQuo:
                     logger.debug('B. %s --> %s' % (filename, pf[2]))
                     #if 'fortios' in filename:
                     #    import epdb; epdb.st()
-                    return pf[2]
+                    #return pf[2]
+                    return captured_return(pf[2], filename=filename)
 
         # match basename to similar dirname
         for pf in self.pluginfiles:
@@ -230,7 +271,8 @@ class StatusQuo:
                 logger.debug('C. %s --> %s' % (filename, pf[2]))
                 #if 'fortios' in filename:
                 #    import epdb; epdb.st()
-                return pf[2]
+                #return pf[2]
+                return captured_return(pf[2], filename=filename)
 
         # use path segments to match
         fparts = filename.split('/')
@@ -238,7 +280,8 @@ class StatusQuo:
         for part in fparts[::-1]:
             if part in self.topics:
                 logger.debug('D. %s --> %s' % (filename, pf[2]))
-                return part
+                #return part
+                return captured_return(part, filename=filename)
 
         for part in fparts[::-1]:
             for topic in self.topics:
@@ -246,14 +289,16 @@ class StatusQuo:
                     continue
                 if topic.startswith(part + '.') or topic.endswith('.' + part):
                     logger.debug('E. %s --> %s' % (filename, pf[2]))
-                    return topic
+                    #return topic
+                    return captured_return(topic, filename=filename)
 
         for part in fparts[::-1]:
             if part in self.synonyms:
                 syn = self.synonyms[part]
                 if syn in self.topics:
                     logger.debug('F. %s --> %s' % (filename, pf[2]))
-                    return syn
+                    #return syn
+                    return captured_return(syn, filename=filename)
 
         for part in fparts[::-1]:
             if part in self.synonyms:
@@ -263,7 +308,8 @@ class StatusQuo:
                         continue
                     if topic.startswith(syn + '.') or topic.endswith('.' + syn):
                         logger.debug('G. %s --> %s' % (filename, pf[2]))
-                        return topic
+                        #return topic
+                        return captured_return(syn, filename=filename)
 
         # is this a _ delimited name?
         if '_' in bn:
@@ -276,7 +322,8 @@ class StatusQuo:
                     xbn = xbn.split('_')[0]
                 if xbn == _bn:
                     logger.debug('H. %s --> %s' % (filename, pf[2]))
-                    return pf[2]
+                    #return pf[2]
+                    return captured_return(pf[2], filename=filename)
 
         # fill in topics via synonyms
         for idx,x in enumerate(self.pluginfiles):
@@ -289,18 +336,25 @@ class StatusQuo:
 
                     if not '.' in x[2] and b == x[2]:
                         logger.debug('I. %s --> %s' % (filename, x[2]))
-                        return x[2]
+                        #return x[2]
+                        return captured_return(x[2], filename=filename)
                     elif x[2].endswith(bn):
                         logger.debug('J. %s --> %s' % (filename, x[2]))
-                        return x[2]
+                        #return x[2]
+                        return captured_return(x[2], filename=filename)
                     elif os.path.dirname(x[-1]).endswith(b):
                         logger.debug('K. %s --> %s' % (filename, x[2]))
-                        return x[2]
+                        #return x[2]
+                        return captured_return(x[2], filename=filename)
 
                     xdn = x[-1].replace(self.checkout_dir + '/', '')
                     if b in xdn:
                         logger.debug('L. %s --> %s' % (filename, x[2]))
-                        return x[2]
+                        if 'sumo' in filename:
+                            import epdb; epdb.st()
+                        #return x[2]
+                        return captured_return(x[2], filename=filename)
+
                     #import epdb; epdb.st()
 
         return None
@@ -309,8 +363,11 @@ class StatusQuo:
     def get_plugins(self):
 
         self.topics = set()
+        for ns in self.static_namespaces:
+            self.topics.add(ns)
 
         # enumerate the modules
+        logger.info('iterating through modules')
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'modules')
         for dirName, subdirList, fileList in os.walk(root):
 
@@ -327,6 +384,7 @@ class StatusQuo:
         self.topics = list(self.topics)
 
         # enumerate the module utils
+        logger.info('iterating through module utils')
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'module_utils')
         for dirName, subdirList, fileList in os.walk(root):
 
@@ -337,6 +395,7 @@ class StatusQuo:
                 self.pluginfiles.append(['module_utils', fn, topic, fp])
 
         # enumerate all the other plugins
+        logger.info('examining other plugins')
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'plugins')
         for dirName, subdirList, fileList in os.walk(root):
 
@@ -346,6 +405,7 @@ class StatusQuo:
                 self.pluginfiles.append([ptype, fn, None, fp])
 
         # let's get rid of contrib too
+        logger.info('looking at contrib scripts')
         root = os.path.join(self.checkout_dir, 'contrib', 'inventory')
         for dirName, subdirList, fileList in os.walk(root):
             ptype = 'scripts'
@@ -356,13 +416,16 @@ class StatusQuo:
                 topic = None
                 self.pluginfiles.append([ptype, fn, topic, fp])
 
-        # guess the rest 
+        logger.info('creating *.misc namespaces')
         for idx,x in enumerate(self.pluginfiles):
             if x[2]:
                 continue
             topic = self._guess_topic(x[-1])
             if topic and topic.endswith('.misc'):
                 self.pluginfiles[idx][2] = topic
+
+        # guess the rest 
+        logger.info('guessing all the lefovers')
         for idx,x in enumerate(self.pluginfiles):
             if x[2]:
                 continue
@@ -374,7 +437,11 @@ class StatusQuo:
             topic = self._guess_topic(x[-1])
             self.pluginfiles[idx][2] = topic
 
+            #if 'ec2.ini' in x:
+            #    import epdb; epdb.st()
+
         # find which modules use orphaned doc fragments
+        logger.info('hashing doc fragments')
         for idx,x in enumerate(self.pluginfiles):
             if x[2]:
                 continue
