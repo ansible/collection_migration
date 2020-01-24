@@ -568,7 +568,21 @@ class StatusQuo:
                 with open(fn, 'w') as f:
                     f.write(fdata)
 
-        #import epdb; epdb.st()
+            # do the same for the stupid openshift files
+            if namespace == 'clustering':
+                logger.info('commenting out openshift dead links in %s' % namespace)
+                with open(fn, 'r') as f:
+                    lines = f.readlines()
+                for idx,x in enumerate(lines):
+                    if 'modules:' in x and ('/_oc' in lines[idx+1] or '/_openshift' in lines[idx+1]):
+                        lines[idx] = x.replace('modules:', '#modules:')
+                        continue
+                    if '/_oc' in x or '/_openshift' in x:
+                        lines[idx] = x.replace('-', '#-')
+                        continue
+                os.remove(fn)
+                with open(fn, 'w') as f:
+                    f.write(''.join(lines))
 
 
 if __name__ == "__main__":
