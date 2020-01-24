@@ -186,6 +186,10 @@ class StatusQuo:
         #if 'sumo' in filename:
         #    import epdb; epdb.st()
 
+        # hardcode nxos
+        if 'nxos' in filename:
+            return 'network.nxos'
+
         bn = os.path.basename(filename)
         bn = bn.replace('.py', '').replace('.ini', '')
 
@@ -522,14 +526,29 @@ class StatusQuo:
         keys = sorted(keys)
         #for k,v in self.collections.items():
         for k in keys:
-            v = self.collections[k]
+            v = copy.deepcopy(self.collections[k])
             if '.' not in k:
                 continue
-            namespace = k.split('.')[0]
-            name = k.split('.')[1]
-            if namespace not in namespaces:
-                namespaces[namespace] = {}
-            namespaces[namespace][name] = copy.deepcopy(v)
+            npaths = k.split('.')
+
+            # network.nxos.storage
+            if len(npaths) > 2:
+                namespace = k.split('.')[0]
+                name = k.split('.')[1]
+                if namespace not in namespaces:
+                    namespaces[namespace] = {}
+                nkeys = list(v.keys())
+                for nkey in nkeys:
+                    if nkey not in namespaces[namespace][name]:
+                        namespaces[namespace][name][nkey] = copy.deepcopy(v[nkey])
+                    else:
+                        namespaces[namespace][name][nkey] = sorted(set( namespaces[namespace][name][nkey] +  copy.deepcopy(v[nkey])))
+            else:
+                namespace = k.split('.')[0]
+                name = k.split('.')[1]
+                if namespace not in namespaces:
+                    namespaces[namespace] = {}
+                namespaces[namespace][name] = copy.deepcopy(v)
 
         for namespace,names in namespaces.items():
             fn = os.path.join('scenarios', 'status_quo', namespace + '.yml')
@@ -548,6 +567,8 @@ class StatusQuo:
                 os.remove(fn)
                 with open(fn, 'w') as f:
                     f.write(fdata)
+
+        #import epdb; epdb.st()
 
 
 if __name__ == "__main__":
