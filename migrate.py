@@ -2005,7 +2005,7 @@ def _rewrite_yaml_test(value, namespace, collection, spec, args):
 ##############################################################################
 
 
-def setup_options(parser) {
+def setup_options(parser):
 
     parser.add_argument('-s', '--spec', required=True, dest='spec_dir', help='A directory spec with YAML files that describe how to organize collections')
     parser.add_argument('-r', '--refresh', action='store_true', dest='refresh', default=False, help='force refreshing local Ansible checkout')
@@ -2026,7 +2026,7 @@ def setup_options(parser) {
     parser.add_argument('-R', '--skip-tests', action='store_true', dest='skip_tests', default=False, help='Skip tests and rewrite the runtime code only.')
     parser.add_argument( '--skip-migration', action='store_true', dest='skip_migration', default=False, help='Skip creating migrated collections.',)
     parser.add_argument( '--skip-publish', action='store_true', dest='skip_publish', default=False, help='Skip publishing migrated collections and core repositories.',)
-}
+
 
 
 def main():
