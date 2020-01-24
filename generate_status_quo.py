@@ -38,18 +38,21 @@ class StatusQuo:
     topics = None
 
     static_namespaces = [
+        'community.extras',
         'monitoring.logstash',
         'monitoring.logdna',
         'monitoring.nagios',
         'monitoring.sumologic',
     ]
 
+    '''
     static_mappings = {
         'logdna': 'monitoring.misc',
         'logstash': 'monitoring.misc',
         'sumologic': 'monitoring.misc',
         'nrdp': 'monitoring.misc',
     }
+    '''
 
     synonyms = {
         'alicloud_ecs': 'alicloud',
@@ -101,6 +104,7 @@ class StatusQuo:
         'ipaddr': 'network',
         'kubectl': 'k8s',
         'libcloud': 'cloud.misc',
+        'libvirt': 'cloud.misc',
         #'linode': 'cloud.linode',
         'logstash': 'monitoring.logstash',
         #'lxc': 'cloud.lxc',
@@ -152,12 +156,70 @@ class StatusQuo:
         'yumdnf': 'packaging.os',
     }
 
+    extras_synonyms = {
+        # connection
+        'chroot': 'community.extras',
+        'funcd': 'community.extras',
+        'jail': 'community.extras',
+        'saltstack': 'community.extras',
+        'zone': 'community.extras',
+        'json_query': 'community.extras',
+        # callback
+        'actionable': 'community.extras',
+        'cgroup_memory_recap': 'community.extras',
+        'cgroup_perf_recap': 'community.extras',
+        'context_demo': 'community.extras',
+        'counter_enabled': 'community.extras',
+        'dense': 'community.extras',
+        'full_skip': 'community.extras',
+        'json': 'community.extras',
+        'junit': 'community.extras',
+        'log_plays': 'community.extras',
+        'minimal': 'community.extras',
+        'null': 'community.extras',
+        'oneline': 'community.extras',
+        'profile_roles': 'community.extras',
+        'profile_tasks': 'community.extras',
+        'selective': 'community.extras',
+        'skippy': 'community.extras',
+        'stderr': 'community.extras',
+        'syslog_json': 'community.extras',
+        'timer': 'community.extras',
+        'tree': 'community.extras',
+        'unixy': 'community.extras',
+        # become
+        'doas': 'community.extras',
+        'dzdo': 'community.extras',
+        'enable': 'community.extras',
+        'ksu': 'community.extras',
+        'machinectl': 'community.extras',
+        'pbrun': 'community.extras',
+        'pfexec': 'community.extras',
+        'pmrun': 'community.extras',
+        'runas': 'community.extras',
+        'sesu': 'community.extras',
+        # strategy
+        'host_pinned': 'community.extras',
+        # lookup
+        'filetree': 'community.extras',
+        'laps_password': 'community.extras',
+        'lmdb_kv': 'community.extras',
+        'manifold': 'community.extras',
+        'password': 'community.extras',
+        'shelvefile': 'community.extras',
+        # shell
+        'csh': 'community.extras',
+        'fish': 'community.extras',
+    }
+
     def __init__(self):
         self.pluginfiles = []
         self.collections = {}
         self.url = 'https://github.com/ansible/ansible'
         self.checkouts_dir = '.cache/checkouts'
         self.checkout_dir = os.path.join(self.checkouts_dir, 'ansible')
+
+        self.synonyms.update(self.extras_synonyms)
 
     @classmethod
     def run(cls):
