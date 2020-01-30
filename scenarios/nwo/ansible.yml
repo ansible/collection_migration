@@ -221,11 +221,17 @@ _core:
   - tree.py
   - yaml.py
   action:
+  - add_host.py
+  - assert.py
+  - async_status.py
   - command.py
   - copy.py
   - debug.py
+  - fail.py
+  - fetch.py
   - gather_facts.py
   - group_by.py
+  - include_vars.py
   - netconf.py
   - normal.py
   - package.py
@@ -235,9 +241,12 @@ _core:
   - reboot.py
   - script.py
   - service.py
+  - set_fact.py
+  - set_stats.py
   - shell.py
   - template.py
   - uri.py
+  - wait_for_connection.py
   - yum.py
   doc_fragments:
   - backup.py
