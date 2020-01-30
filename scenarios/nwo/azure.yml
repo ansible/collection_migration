@@ -1,0 +1,18 @@
+azcollection:
+  modules:
+  - cloud/azure/azure_rm_deployment.py
+  - cloud/azure/azure_rm_dnsrecordset.py
+  - cloud/azure/azure_rm_dnszone.py
+  - cloud/azure/azure_rm_networkinterface.py
+  - cloud/azure/azure_rm_publicipaddress.py
+  - cloud/azure/azure_rm_securitygroup.py
+  - cloud/azure/azure_rm_storageaccount.py
+  - cloud/azure/azure_rm_subnet.py
+  - cloud/azure/azure_rm_virtualmachine.py
+  - cloud/azure/azure_rm_virtualnetwork.py
+  module_utils:
+  - azure_rm_common.py
+  - azure_rm_common_ext.py
+  - azure_rm_common_rest.py
+  inventory:
+  - azure_rm.py
