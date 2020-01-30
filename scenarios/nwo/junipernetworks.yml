@@ -1,5 +1,13 @@
 junos:
   modules:
+  - network/junos/_junos_interface.py
+  - network/junos/_junos_l2_interface.py
+  - network/junos/_junos_l3_interface.py
+  - network/junos/_junos_linkagg.py
+  - network/junos/_junos_lldp.py
+  - network/junos/_junos_lldp_interface.py
+  - network/junos/_junos_static_route.py
+  - network/junos/_junos_vlan.py
   - network/junos/junos_banner.py
   - network/junos/junos_command.py
   - network/junos/junos_config.py

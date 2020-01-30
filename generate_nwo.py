@@ -37,6 +37,102 @@ from pprint import pprint
 import requests_cache
 requests_cache.install_cache('.cache/requests_cache')
 
+ghrepos = [
+    # network
+    'https://github.com/ansible-network/ansible_collections.ansible.netcommon',
+    'https://github.com/ansible-network/ansible_collections.cisco.iosxr',
+    'https://github.com/ansible-network/ansible_collections.junipernetworks.junos',
+    'https://github.com/ansible-network/ansible_collections.arista.eos',
+    'https://github.com/ansible-network/ansible_collections.cisco.ios',
+    'https://github.com/ansible-network/ansible_collections.vyos.vyos',
+    'https://github.com/ansible-network/ansible_collections.network.netconf',
+    'https://github.com/ansible-network/ansible_collections.network.cli',
+    'https://github.com/ansible-network/ansible_collections.cisco.nxos',
+    # community
+    'https://github.com/ansible-collections/ansible_collections_netapp',
+    'https://github.com/ansible-collections/grafana',
+    'https://github.com/ansible-collections/ansible_collections_google',
+    'https://github.com/ansible-collections/ansible_collections_azure',
+    'https://github.com/ansible-collections/ibm_zos_ims',
+    'https://github.com/ansible-collections/ibm_zos_core',
+    # partners
+    'https://github.com/Azure/AnsibleCollection',
+    'https://github.com/ansible/ansible_collections_azure',
+    #'https://github.com/ansible/ansible/tree/devel/lib/ansible/modules/network/aci',
+    'https://github.com/F5Networks/f5-ansible',
+    'https://github.com/ansible-network/ansible_collections.cisco.ios',
+    'https://github.com/ansible-network/ansible_collections.cisco.iosxr',
+    'https://github.com/ansible-network/ansible_collections.cisco.nxos',
+    'https://github.com/aristanetworks/ansible-cvp',
+    'https://github.com/ansible-security/ibm_qradar',
+    'https://github.com/cyberark/ansible-security-automation-collection',
+    'https://github.com/Paloaltonetworks/ansible-pan',
+    'https://github.com/ansible/ansible_collections_netapp',
+    'https://github.com/ansible/ansible_collections_google',
+    'https://github.com/ansible-network/ansible_collections.juniper.junos',
+    #'https://github.com/ansible/ansible/tree/devel/lib/ansible/modules/network/nso',
+    'https://github.com/aruba/aruba-switch-ansible',
+    'https://github.com/CiscoDevNet/ansible-dnac',
+    'https://github.com/CiscoDevNet/ansible-viptela',
+    'https://github.com/dynatrace-innovationlab/ansible-collection',
+    'https://github.com/sensu/sensu-go-ansible',
+    #'https://github.com/CheckPointSW/cpAnsibleModule',
+    #'https://galaxy.ansible.com/frankshen01/testfortios',
+    'https://github.com/ansible-security/SplunkEnterpriseSecurity',
+    'https://github.com/ansible/ansible_collections_netapp',
+    'https://github.com/ansible/ansible_collections_netapp',
+    'https://github.com/dell/ansible-powermax',
+    'https://github.com/ansible/ansible_collections_netapp',
+    'https://github.com/rubrikinc/rubrik-modules-for-ansible',
+    'https://github.com/HewlettPackard/oneview-ansible',
+    'https://github.com/dell/dellemc-openmanage-ansible-modules',
+    'https://github.com/dell/redfish-ansible-module',
+    'https://github.com/nokia/sros-ansible',
+    #'https://github.com/ansible/ansible/tree/devel/lib/ansible/modules/network/frr',
+    'https://github.com/ansible-network/ansible_collections.vyos.vyos',
+    'https://github.com/wtinetworkgear/wti-collection',
+    'https://github.com/Tirasa/SyncopeAnsible',
+    # redhat
+    #   foreman/candlepin/etc
+    # tower
+    'https://opendev.org/openstack/ansible-collections-openstack'
+]
+
+partners = [
+    ('ansible', 'netcommon'),
+    ('awx', 'awx'),
+    'azure',
+    ('azure', 'azcollection'),
+    ('gavinfish', 'azuretest'),
+    'cisco',
+    ('cyberark', 'bizdev'),
+    'f5networks',
+    'fortinet',
+    ('frankshen01', 'testfortios'),
+    'google',
+    'netapp',
+    ('netapp', 'ontap'),
+    'netbox_community',
+    ('openstack', 'cloud'),
+    ('sensu', 'sensu_go'),
+    'servicenow'
+]
+
+non_partners = [
+    'chillancezen',
+    'debops',
+    'engineerakki',
+    'jacklotusho',
+    'kbreit',
+    'lhoang2',
+    'mattclay',
+    'mnecas',
+    'nttmcp',
+    'rrey',
+    'schmots1',
+    'sh4d1',
+    'testing'
+]
 
 def captured_return(result, **kwargs):
     #if 'filename' in kwargs and 'sumo' in kwargs['filename']:
@@ -345,176 +441,12 @@ class StatusQuo:
 
     def _guess_topic(self, filename):
 
+        ''' DEPRECATED: was used to "smartly" match a file to a topic '''
+
         if self.in_base(filename):
             return 'ansible._core'
 
         return None
-
-        # hardcode nxos
-        if 'nxos' in filename:
-            return 'network.nxos'
-
-        bn = os.path.basename(filename)
-        bn = bn.replace('.py', '').replace('.ini', '')
-
-        # workaround for everything depending on aws
-        if bn == 'core' and 'aws' not in filename:
-            #return 'utilities.misc'
-            return captured_return('utilities.misc', filename=filename)
-
-        # workaround for mu/database.py ending up in aerospike
-        if bn == 'database':
-            return 'database.misc'
-
-        # don't lump all facts into network
-        if '/facts/' in filename and 'module_utils/network' not in filename:
-            #return None
-            return captured_return(None, filename=filename)
-
-        # does the filepath contain a topic?
-        paths = filename.replace(self.checkout_dir + '/', '')
-        paths = paths.replace('lib/ansible/', '')
-        paths = paths.split('/')
-        paths = paths[1:]
-
-        for ltup in zip(paths, paths[1:]):
-            thistopic = '.'.join(ltup)
-            if thistopic in self.topics:
-                logger.debug('A. %s --> %s' % (filename, thistopic))
-                #return thistopic
-                return captured_return(thistopic, filename=filename)
-
-        # fill in topics via synonyms
-        for idx,x in enumerate(self.pluginfiles):
-
-            if not x[2]:
-                continue
-
-            for a,b in self.synonyms.items():
-                if a in bn:
-
-                    if not '.' in x[2] and b == x[2]:
-                        logger.debug('I. %s --> %s' % (filename, x[2]))
-                        #return x[2]
-                        return captured_return(x[2], filename=filename)
-                    elif x[2].endswith(bn):
-                        logger.debug('J. %s --> %s' % (filename, x[2]))
-                        #return x[2]
-                        return captured_return(x[2], filename=filename)
-                    elif os.path.dirname(x[-1]).endswith(b):
-                        logger.debug('K. %s --> %s' % (filename, x[2]))
-                        #return x[2]
-                        return captured_return(x[2], filename=filename)
-
-        # match on similar filenames
-        if bn not in ['common']:
-            for pf in self.pluginfiles:
-                if not pf[2]:
-                    continue
-                if os.path.basename(pf[-1]).replace('.py', '') == bn:
-                    logger.debug('B. %s --> %s' % (filename, pf[2]))
-                    #if 'fortios' in filename:
-                    #    import epdb; epdb.st()
-                    #return pf[2]
-                    return captured_return(pf[2], filename=filename)
-
-        # match basename to similar dirname
-        for pf in self.pluginfiles:
-            if not pf[2]:
-                continue
-            xdn = os.path.basename(os.path.dirname(pf[-1]))
-            if xdn == bn:
-                logger.debug('C. %s --> %s' % (filename, pf[2]))
-                #if 'fortios' in filename:
-                #    import epdb; epdb.st()
-                #return pf[2]
-                return captured_return(pf[2], filename=filename)
-
-        # use path segments to match
-        fparts = filename.split('/')
-        fparts[-1] = fparts[-1].split('.')[0]
-        for part in fparts[::-1]:
-            if part in self.topics:
-                logger.debug('D. %s --> %s' % (filename, pf[2]))
-                #return part
-                return captured_return(part, filename=filename)
-
-        for part in fparts[::-1]:
-            for topic in self.topics:
-                if not '.' in topic:
-                    continue
-                if topic.startswith(part + '.') or topic.endswith('.' + part):
-                    logger.debug('E. %s --> %s' % (filename, pf[2]))
-                    #return topic
-                    return captured_return(topic, filename=filename)
-
-        for part in fparts[::-1]:
-            if part in self.synonyms:
-                syn = self.synonyms[part]
-                if syn in self.topics:
-                    logger.debug('F. %s --> %s' % (filename, pf[2]))
-                    #return syn
-                    return captured_return(syn, filename=filename)
-
-        for part in fparts[::-1]:
-            if part in self.synonyms:
-                syn = self.synonyms[part]
-                for topic in self.topics:
-                    if not '.' in topic:
-                        continue
-                    if topic.startswith(syn + '.') or topic.endswith('.' + syn):
-                        logger.debug('G. %s --> %s' % (filename, pf[2]))
-                        #return topic
-                        return captured_return(syn, filename=filename)
-
-        # is this a _ delimited name?
-        if '_' in bn:
-            _bn = bn.split('_')[0]
-            for pf in self.pluginfiles:
-                if not pf[2]:
-                    continue
-                xbn = os.path.basename(pf[-1]).replace('.py', '').replace('.ini', '').replace('.yml', '')
-                if '_' in xbn:
-                    xbn = xbn.split('_')[0]
-                if xbn == _bn:
-                    logger.debug('H. %s --> %s' % (filename, pf[2]))
-                    #return pf[2]
-                    return captured_return(pf[2], filename=filename)
-
-        # fill in topics via synonyms
-        for idx,x in enumerate(self.pluginfiles):
-
-            if not x[2]:
-                continue
-
-            for a,b in self.synonyms.items():
-                if a in bn:
-
-                    if not '.' in x[2] and b == x[2]:
-                        logger.debug('I. %s --> %s' % (filename, x[2]))
-                        #return x[2]
-                        return captured_return(x[2], filename=filename)
-                    elif x[2].endswith(bn):
-                        logger.debug('J. %s --> %s' % (filename, x[2]))
-                        #return x[2]
-                        return captured_return(x[2], filename=filename)
-                    elif os.path.dirname(x[-1]).endswith(b):
-                        logger.debug('K. %s --> %s' % (filename, x[2]))
-                        #return x[2]
-                        return captured_return(x[2], filename=filename)
-
-                    xdn = x[-1].replace(self.checkout_dir + '/', '')
-                    if b in xdn:
-                        logger.debug('L. %s --> %s' % (filename, x[2]))
-                        if 'sumo' in filename:
-                            import epdb; epdb.st()
-                        #return x[2]
-                        return captured_return(x[2], filename=filename)
-
-                    #import epdb; epdb.st()
-
-        return None
-
 
     def get_plugins(self):
 
@@ -1037,6 +969,12 @@ class GalaxyIndexer:
             #    import epdb; epdb.st()
 
     def provides_plugin(self, bit, plugin_type=None, exact=False):
+
+        if bit.startswith('_'):
+            candidates = self.provides_plugin(bit.replace('_', '', 1), plugin_type=plugin_type, exact=exact)
+            if candidates:
+                return candidates
+
         candidates = {}
         for fqn,collection in self.collections.items():
             for ptype,pfiles in collection['plugins'].items():
@@ -1054,6 +992,9 @@ class GalaxyIndexer:
                             candidates[fqn][ptype] = [] 
                         candidates[fqn][ptype].append(pfile)
 
+        #if 'net_l2_interface' in bit:
+        #    import epdb; epdb.st()
+
         #if 'na_ontap_svm.py' in bit:
         #    import epdb; epdb.st()
 
@@ -1070,35 +1011,9 @@ if __name__ == "__main__":
 
     gi = GalaxyIndexer()
     gi.run()
-    ghrepos = [
-        # network
-        'https://github.com/ansible-network/ansible_collections.ansible.netcommon',
-        'https://github.com/ansible-network/ansible_collections.cisco.iosxr',
-        'https://github.com/ansible-network/ansible_collections.junipernetworks.junos',
-        'https://github.com/ansible-network/ansible_collections.arista.eos',
-        'https://github.com/ansible-network/ansible_collections.cisco.ios',
-        'https://github.com/ansible-network/ansible_collections.vyos.vyos',
-        'https://github.com/ansible-network/ansible_collections.network.netconf',
-        'https://github.com/ansible-network/ansible_collections.network.cli',
-        'https://github.com/ansible-network/ansible_collections.cisco.nxos',
-        # community
-        'https://github.com/ansible-collections/ansible_collections_netapp',
-        'https://github.com/ansible-collections/grafana',
-        'https://github.com/ansible-collections/ansible_collections_google',
-        'https://github.com/ansible-collections/ansible_collections_azure',
-        'https://github.com/ansible-collections/ibm_zos_ims',
-        'https://github.com/ansible-collections/ibm_zos_core',
-        # partners
-        'https://github.com/Azure/AnsibleCollection',
-        # redhat
-        #   foreman/candlepin/etc
-        # tower
-        'https://opendev.org/openstack/ansible-collections-openstack'
-    ]
     for ghr in ghrepos:
         gi.fetch_git_repo(ghr)
     pprint(gi.provides_plugin('na_ontap_svm.py', plugin_type='module'))
-    #import epdb; epdb.st()
 
     sq = StatusQuo()
     sq.run(usecache=args.usecache, galaxy_indexer=gi, base_scenario_file='scenarios/bcs/ansible.yml')

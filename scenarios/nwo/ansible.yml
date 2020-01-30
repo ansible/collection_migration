@@ -313,8 +313,21 @@ netcommon:
   - network/cli/cli_config.py
   - network/files/net_get.py
   - network/files/net_put.py
+  - network/interface/_net_interface.py
+  - network/interface/_net_linkagg.py
+  - network/interface/_net_lldp_interface.py
+  - network/layer2/_net_l2_interface.py
+  - network/layer2/_net_vlan.py
+  - network/layer3/_net_l3_interface.py
+  - network/layer3/_net_vrf.py
+  - network/protocol/_net_lldp.py
   - network/restconf/restconf_config.py
   - network/restconf/restconf_get.py
+  - network/routing/_net_static_route.py
+  - network/system/_net_banner.py
+  - network/system/_net_logging.py
+  - network/system/_net_system.py
+  - network/system/_net_user.py
   - network/system/net_ping.py
   connection:
   - napalm.py
