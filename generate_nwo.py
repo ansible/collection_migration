@@ -525,6 +525,14 @@ class StatusQuo:
         if trimmed and plugin_type and trimmed in self.base_scenario['_core'].get(plugin_type, []):
             return True
 
+        # map actions back to modules
+        if trimmed and plugin_type == 'action':
+            #if 'add_host' in filename:
+            #    import epdb; epdb.st()
+            for fn in self.base_scenario['_core'].get('modules', []):
+                if fn.endswith('/' + trimmed):
+                    return True
+
         #import epdb; epdb.st()
         #if 'add_host' in filename:
         #    import epdb; epdb.st()
@@ -991,6 +999,13 @@ class GalaxyIndexer:
                         if ptype not in candidates[fqn]:
                             candidates[fqn][ptype] = [] 
                         candidates[fqn][ptype].append(pfile)
+
+        '''
+        if not candidates and plugin_type == 'action':
+            xcandidates = self.provides_plugin(bit.replace('_', '', 1), plugin_type='module', exact=exact)
+            if xcandidates:
+                import epdb; epdb.st()
+        '''
 
         #if 'net_l2_interface' in bit:
         #    import epdb; epdb.st()
