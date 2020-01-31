@@ -24,6 +24,11 @@ from sh import find
 
 from pprint import pprint
 
+from ansibullbot.utils.component_tools import AnsibleComponentMatcher
+#from ansibullbot.utils.file_tools import FileIndexer
+from ansibullbot.utils.git_tools import GitRepoWrapper
+#from ansibullbot.utils.moduletools import ModuleIndexer
+
 import requests_cache
 requests_cache.install_cache('.cache/requests_cache')
 
@@ -146,7 +151,11 @@ class NWO:
 
         self.scenario_output_dir = os.path.join('scenarios', self.SCENARIO + '.test')
 
+        self.component_matcher = None
+        #self.file_indexer = None
+        #self.module_indexer = None
         self.galaxyindexer = None
+        self.cachedir = '.cache'
         self.cachefile = '.cache/nwo_status_quo.pickle'
         self.pluginfiles = []
         self.collections = {}
@@ -170,6 +179,25 @@ class NWO:
 
         self.map_existing_files_to_rules()
         self.manage_checkout()
+
+        # ansibot magic
+        gitrepo = GitRepoWrapper(
+            cachedir=self.cachedir,
+            repo='https://github.com/ansible/ansible'
+        )
+        '''
+        self.file_indexer = FileIndexer(gitrepo=gitrepo)
+        self.module_indexer = ModuleIndexer(
+            cachedir=self.cachedir,
+            gitrepo=gitrepo,
+            commits=False
+        )
+        '''
+        self.component_matcher = AnsibleComponentMatcher(
+            gitrepo=gitrepo,
+            email_cache={}
+        )
+
         self.get_plugins()
         self.map_plugins_to_collections()
 
@@ -361,23 +389,41 @@ class NWO:
                 'fqn',
                 'namespace',
                 'name',
+                'current_support_level',
+                'new_support_level',
                 'scenario_file',
                 'scenario_plugin_type',
                 'matched_line']
             )
 
             for pf in self.pluginfiles:
+
+                ns = pf[2][0]
+                name = pf[2][1]
+                fqn = '%s.%s' % (ns, name)
+                if ns == 'ansible' and name == '_core':
+                    fqn = 'base'
+
+                relpath = pf[3].replace(self.checkout_dir+'/', '')
+                meta = self.component_matcher.get_meta_for_file(relpath)
+
+                new_support = 'community'
+                if pf[2][0] == 'ansible' and pf[2][1] == '_core':
+                    new_support = 'core'
+
                 row = [
-                    pf[3].replace(self.checkout_dir+'/', ''),
-                    '%s.%s' % (pf[2][0], pf[2][1]),
-                    pf[2][0],
-                    pf[2][1],
-                    'scenarios/nwo/%s.yml' % pf[2][0],
+                    relpath,
+                    fqn,
+                    ns,
+                    name,
+                    meta['support'],
+                    new_support,
+                    'scenarios/nwo/%s.yml' % ns,
                     pf[4]['plugin_type'],
                     pf[4]['matcher']
                 ]
-                if pf[2][0] == 'community' and pf[2][1] == 'general':
-                    row[4] = 'unclaimed!'
+                if ns == 'community' and name == 'general':
+                    row[6] = 'unclaimed!'
                 spamwriter.writerow(row)
 
     def make_spec(self):
