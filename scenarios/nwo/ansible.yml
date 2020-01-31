@@ -5,6 +5,7 @@ _core:
   - commands/raw.py
   - commands/script.py
   - commands/shell.py
+  - files/archive.py
   - files/blockinfile.py
   - files/copy.py
   - files/fetch.py
