@@ -59,7 +59,6 @@ _core:
   - system/setup.py
   - system/systemd.py
   - system/sysvinit.py
-  - system/timezone.py
   - system/user.py
   - utilities/helper/_accelerate.py
   - utilities/helper/meta.py
