@@ -215,7 +215,6 @@ _core:
   callback:
   - debug.py
   - default.py
-  - junit.py
   - minimal.py
   - oneline.py
   - tree.py
