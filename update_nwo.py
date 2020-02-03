@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
 
+#################################################################
+# update_nwo.py - recreates scenarios/nwo with current plugins
+# 
+# instructions:
+#   1) virtualenv --python=$(which python3) venv
+#   2) source venv/bin/activate
+#   3) pip install -r requirements_nwo.txt
+#   4) ./update_nwo.py
+#   5) rm -rf scenarios/nwo
+#   6) mv scenarios/nwo.new scenarios/nwo
+#
+#################################################################
+
 
 import argparse
 import contextlib
