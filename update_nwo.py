@@ -11,7 +11,6 @@ import json
 import os
 import pickle
 import re
-import requests
 import shutil
 import subprocess
 
@@ -25,118 +24,10 @@ from sh import find
 from pprint import pprint
 
 from ansibullbot.utils.component_tools import AnsibleComponentMatcher
-#from ansibullbot.utils.file_tools import FileIndexer
 from ansibullbot.utils.git_tools import GitRepoWrapper
-#from ansibullbot.utils.moduletools import ModuleIndexer
-
-import requests_cache
-requests_cache.install_cache('.cache/requests_cache')
-
-ghrepos = [
-    # network
-    'https://github.com/ansible-network/ansible_collections.ansible.netcommon',
-    'https://github.com/ansible-network/ansible_collections.cisco.iosxr',
-    'https://github.com/ansible-network/ansible_collections.junipernetworks.junos',
-    'https://github.com/ansible-network/ansible_collections.arista.eos',
-    'https://github.com/ansible-network/ansible_collections.cisco.ios',
-    'https://github.com/ansible-network/ansible_collections.vyos.vyos',
-    'https://github.com/ansible-network/ansible_collections.network.netconf',
-    'https://github.com/ansible-network/ansible_collections.network.cli',
-    'https://github.com/ansible-network/ansible_collections.cisco.nxos',
-    # community
-    'https://github.com/ansible-collections/ansible_collections_netapp',
-    'https://github.com/ansible-collections/grafana',
-    'https://github.com/ansible-collections/ansible_collections_google',
-    'https://github.com/ansible-collections/ansible_collections_azure',
-    'https://github.com/ansible-collections/ibm_zos_ims',
-    'https://github.com/ansible-collections/ibm_zos_core',
-    # partners
-    'https://github.com/Azure/AnsibleCollection',
-    'https://github.com/ansible/ansible_collections_azure',
-    #'https://github.com/ansible/ansible/tree/devel/lib/ansible/modules/network/aci',
-    'https://github.com/F5Networks/f5-ansible',
-    'https://github.com/ansible-network/ansible_collections.cisco.ios',
-    'https://github.com/ansible-network/ansible_collections.cisco.iosxr',
-    'https://github.com/ansible-network/ansible_collections.cisco.nxos',
-    'https://github.com/aristanetworks/ansible-cvp',
-    'https://github.com/ansible-security/ibm_qradar',
-    'https://github.com/cyberark/ansible-security-automation-collection',
-    'https://github.com/Paloaltonetworks/ansible-pan',
-    'https://github.com/ansible/ansible_collections_netapp',
-    'https://github.com/ansible/ansible_collections_google',
-    'https://github.com/ansible-network/ansible_collections.juniper.junos',
-    #'https://github.com/ansible/ansible/tree/devel/lib/ansible/modules/network/nso',
-    'https://github.com/aruba/aruba-switch-ansible',
-    'https://github.com/CiscoDevNet/ansible-dnac',
-    'https://github.com/CiscoDevNet/ansible-viptela',
-    'https://github.com/dynatrace-innovationlab/ansible-collection',
-    'https://github.com/sensu/sensu-go-ansible',
-    #'https://github.com/CheckPointSW/cpAnsibleModule',
-    #'https://galaxy.ansible.com/frankshen01/testfortios',
-    'https://github.com/ansible-security/SplunkEnterpriseSecurity',
-    'https://github.com/ansible/ansible_collections_netapp',
-    'https://github.com/ansible/ansible_collections_netapp',
-    'https://github.com/dell/ansible-powermax',
-    'https://github.com/ansible/ansible_collections_netapp',
-    'https://github.com/rubrikinc/rubrik-modules-for-ansible',
-    'https://github.com/HewlettPackard/oneview-ansible',
-    'https://github.com/dell/dellemc-openmanage-ansible-modules',
-    'https://github.com/dell/redfish-ansible-module',
-    'https://github.com/nokia/sros-ansible',
-    #'https://github.com/ansible/ansible/tree/devel/lib/ansible/modules/network/frr',
-    'https://github.com/ansible-network/ansible_collections.vyos.vyos',
-    'https://github.com/wtinetworkgear/wti-collection',
-    'https://github.com/Tirasa/SyncopeAnsible',
-    # redhat
-    #   foreman/candlepin/etc
-    # tower
-    'https://opendev.org/openstack/ansible-collections-openstack'
-]
-
-partners = [
-    ('ansible', 'netcommon'),
-    ('awx', 'awx'),
-    'azure',
-    ('azure', 'azcollection'),
-    ('gavinfish', 'azuretest'),
-    'cisco',
-    ('cyberark', 'bizdev'),
-    'f5networks',
-    'fortinet',
-    ('frankshen01', 'testfortios'),
-    'google',
-    'netapp',
-    ('netapp', 'ontap'),
-    'netbox_community',
-    ('openstack', 'cloud'),
-    ('sensu', 'sensu_go'),
-    'servicenow'
-]
-
-non_partners = [
-    'chillancezen',
-    'debops',
-    'engineerakki',
-    'jacklotusho',
-    'kbreit',
-    'lhoang2',
-    'mattclay',
-    'mnecas',
-    'nttmcp',
-    'rrey',
-    'schmots1',
-    'sh4d1',
-    'testing'
-]
-
-def captured_return(result, **kwargs):
-    #if 'filename' in kwargs and 'sumo' in kwargs['filename']:
-    #    import epdb; epdb.st()
-    return result
 
 
-
-class NWO:
+class UpdateNWO:
 
     SCENARIO = 'nwo'
     DUMPING_GROUND = ('community', 'general')
@@ -152,11 +43,8 @@ class NWO:
         self.scenario_output_dir = os.path.join('scenarios', self.SCENARIO + '.test')
 
         self.component_matcher = None
-        #self.file_indexer = None
-        #self.module_indexer = None
         self.galaxyindexer = None
         self.cachedir = '.cache'
-        self.cachefile = '.cache/nwo_status_quo.pickle'
         self.pluginfiles = []
         self.collections = {}
         self.url = 'https://github.com/ansible/ansible'
@@ -183,16 +71,8 @@ class NWO:
         # ansibot magic
         gitrepo = GitRepoWrapper(
             cachedir=self.cachedir,
-            repo='https://github.com/ansible/ansible'
+            repo=self.url
         )
-        '''
-        self.file_indexer = FileIndexer(gitrepo=gitrepo)
-        self.module_indexer = ModuleIndexer(
-            cachedir=self.cachedir,
-            gitrepo=gitrepo,
-            commits=False
-        )
-        '''
         self.component_matcher = AnsibleComponentMatcher(
             gitrepo=gitrepo,
             email_cache={}
@@ -410,6 +290,7 @@ class NWO:
                 new_support = 'community'
                 if pf[2][0] == 'ansible' and pf[2][1] == '_core':
                     new_support = 'core'
+                    name = 'base'
 
                 row = [
                     relpath,
@@ -477,6 +358,6 @@ if __name__ == "__main__":
     parser.add_argument('--usecache', action='store_true')
     args = parser.parse_args()
 
-    nwo = NWO()
+    nwo = UpdateNWO()
     nwo.run(usecache=args.usecache, galaxy_indexer=None)
 
