@@ -40,7 +40,7 @@ class UpdateNWO:
 
     def __init__(self):
 
-        self.scenario_output_dir = os.path.join('scenarios', self.SCENARIO + '.test')
+        self.scenario_output_dir = os.path.join('scenarios', self.SCENARIO + '.new')
 
         self.component_matcher = None
         self.galaxyindexer = None
@@ -86,6 +86,9 @@ class UpdateNWO:
 
 
     def map_existing_files_to_rules(self):
+
+        ''' Make a set of matching rules based on current scenario files '''
+
         sfiles = glob.glob('scenarios/%s/*.yml' % self.SCENARIO) 
         sfiles = sorted(set(sfiles))
 
@@ -110,6 +113,9 @@ class UpdateNWO:
                         })
 
     def manage_checkout(self):
+
+        ''' Could probably be replaced with pygit '''
+
         logger.info('manage ansible checkout for NWO updates')
 
         if not os.path.exists(self.checkouts_dir):
@@ -126,7 +132,7 @@ class UpdateNWO:
 
     def _guess_collection(self, plugin_type=None, plugin_basename=None, plugin_relpath=None, plugin_filepath=None):
 
-        ''' use rules to match a file to a namespace.name '''
+        ''' use rules to match a plugin file to a namespace.name '''
 
         logger.debug(plugin_filepath)
 
@@ -174,6 +180,8 @@ class UpdateNWO:
         )
 
     def get_plugins(self):
+
+        ''' Find all plugins in the cached checkout and make a list '''
 
         # enumerate the modules
         logger.info('iterating through modules')
@@ -223,6 +231,8 @@ class UpdateNWO:
 
     def map_plugins_to_collections(self):
 
+        ''' associate each plugin to a collection '''
+
         self.community_general_topics = set()
         self.topics = set()
 
@@ -260,6 +270,8 @@ class UpdateNWO:
         self.pluginfiles = sorted(self.pluginfiles, key=lambda x: x[3])
 
     def make_compiled_csv(self):
+        
+        ''' Make the human readable aggregated spreadsheet '''
 
         fn = os.path.join(self.scenario_output_dir, 'compiled.csv')        
         with open(fn, 'w') as csvfile:
@@ -351,13 +363,10 @@ class UpdateNWO:
                     ruamel.yaml.dump(this_data, f, Dumper=ruamel.yaml.RoundTripDumper)
 
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--usecache', action='store_true')
     args = parser.parse_args()
 
     nwo = UpdateNWO()
-    nwo.run(usecache=args.usecache, galaxy_indexer=None)
-
+    nwo.run(usecache=args.usecache)
