@@ -2324,6 +2324,7 @@ general:
   - cloudscale.py
   - cloudstack.py
   - crypto.py
+  - csharp/Ansible.Privilege.cs
   - database.py
   - digital_ocean.py
   - dimensiondata.py
@@ -2480,6 +2481,15 @@ general:
   - oracle/oci_utils.py
   - ovirt.py
   - postgres.py
+  - powershell/Ansible.ModuleUtils.ArgvParser.psm1
+  - powershell/Ansible.ModuleUtils.Backup.psm1
+  - powershell/Ansible.ModuleUtils.CamelConversion.psm1
+  - powershell/Ansible.ModuleUtils.CommandUtil.psm1
+  - powershell/Ansible.ModuleUtils.FileUtil.psm1
+  - powershell/Ansible.ModuleUtils.LinkUtil.psm1
+  - powershell/Ansible.ModuleUtils.PrivilegeUtil.psm1
+  - powershell/Ansible.ModuleUtils.SID.psm1
+  - powershell/Ansible.ModuleUtils.WebRequest.psm1
   - pure.py
   - pycompat24.py
   - rabbitmq.py
