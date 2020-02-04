@@ -1669,6 +1669,7 @@ general:
   - network/f5/_bigip_security_port_list.py
   - network/f5/_bigip_traffic_group.py
   - network/f5/_bigiq_device_facts.py
+  - network/f5/bigip_appsvcs_extension.py
   - network/fortianalyzer/faz_device.py
   - network/fortimanager/fmgr_device.py
   - network/fortimanager/fmgr_device_config.py

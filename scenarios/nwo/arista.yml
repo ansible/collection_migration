@@ -3,16 +3,17 @@ eos:
   - network/eos/*
   - network/eos/*/*
   - network/eos/*/*/*
+  - network/eos/*/*/*/*
   - network/eos/*/*/*/*/*
   modules:
   - network/eos/*
+  terminal:
+  - eos.py
+  httpapi:
+  - eos.py
   action:
   - eos.py
   cliconf:
   - eos.py
   doc_fragments:
-  - eos.py
-  httpapi:
-  - eos.py
-  terminal:
   - eos.py

@@ -1,4 +1,75 @@
 _core:
+  modules:
+  - commands/command.py
+  - commands/expect.py
+  - commands/raw.py
+  - commands/script.py
+  - commands/shell.py
+  - files/blockinfile.py
+  - files/copy.py
+  - files/fetch.py
+  - files/file.py
+  - files/find.py
+  - files/lineinfile.py
+  - files/replace.py
+  - files/stat.py
+  - files/tempfile.py
+  - files/template.py
+  - files/unarchive.py
+  - inventory/add_host.py
+  - inventory/group_by.py
+  - net_tools/basics/get_url.py
+  - net_tools/basics/slurp.py
+  - net_tools/basics/uri.py
+  - packaging/language/pip.py
+  - packaging/os/apt.py
+  - packaging/os/apt_key.py
+  - packaging/os/apt_repo.py
+  - packaging/os/apt_repository.py
+  - packaging/os/dnf.py
+  - packaging/os/dpkg_selections.py
+  - packaging/os/package.py
+  - packaging/os/package_facts.py
+  - packaging/os/rpm_key.py
+  - packaging/os/yum.py
+  - packaging/os/yum_repository.py
+  - source_control/git.py
+  - source_control/subversion.py
+  - system/cron.py
+  - system/debconf.py
+  - system/gather_facts.py
+  - system/getent.py
+  - system/group.py
+  - system/hostname.py
+  - system/iptables.py
+  - system/known_hosts.py
+  - system/ping.py
+  - system/reboot.py
+  - system/service.py
+  - system/service_facts.py
+  - system/setup.py
+  - system/systemd.py
+  - system/sysvinit.py
+  - system/user.py
+  - utilities/helper/_accelerate.py
+  - utilities/helper/meta.py
+  - utilities/logic/assert.py
+  - utilities/logic/async_status.py
+  - utilities/logic/async_wrapper.py
+  - utilities/logic/debug.py
+  - utilities/logic/fail.py
+  - utilities/logic/import_playbook.py
+  - utilities/logic/import_role.py
+  - utilities/logic/import_tasks.py
+  - utilities/logic/include.py
+  - utilities/logic/include_role.py
+  - utilities/logic/include_tasks.py
+  - utilities/logic/include_vars.py
+  - utilities/logic/pause.py
+  - utilities/logic/set_fact.py
+  - utilities/logic/set_stats.py
+  - utilities/logic/wait_for.py
+  - utilities/logic/wait_for_connection.py
   module_utils:
   - _text.py
   - ansible_release.py
@@ -113,80 +184,31 @@ _core:
   - powershell/Ansible.ModuleUtils.SID.psm1
   - powershell/Ansible.ModuleUtils.WebRequest.psm1
   - service.py
+  - six/*
   - splitter.py
   - urls.py
   - yumdnf.py
-  modules:
-  - commands/command.py
-  - commands/expect.py
-  - commands/raw.py
-  - commands/script.py
-  - commands/shell.py
-  - files/blockinfile.py
-  - files/copy.py
-  - files/fetch.py
-  - files/file.py
-  - files/find.py
-  - files/lineinfile.py
-  - files/replace.py
-  - files/stat.py
-  - files/tempfile.py
-  - files/template.py
-  - files/unarchive.py
-  - inventory/add_host.py
-  - inventory/group_by.py
-  - net_tools/basics/get_url.py
-  - net_tools/basics/slurp.py
-  - net_tools/basics/uri.py
-  - packaging/language/pip.py
-  - packaging/os/apt.py
-  - packaging/os/apt_key.py
-  - packaging/os/apt_repo.py
-  - packaging/os/apt_repository.py
-  - packaging/os/dnf.py
-  - packaging/os/dpkg_selections.py
-  - packaging/os/package.py
-  - packaging/os/package_facts.py
-  - packaging/os/rpm_key.py
-  - packaging/os/yum.py
-  - packaging/os/yum_repository.py
-  - source_control/git.py
-  - source_control/subversion.py
-  - system/cron.py
-  - system/debconf.py
-  - system/gather_facts.py
-  - system/getent.py
-  - system/group.py
-  - system/hostname.py
-  - system/iptables.py
-  - system/known_hosts.py
-  - system/ping.py
-  - system/reboot.py
-  - system/service.py
-  - system/service_facts.py
-  - system/setup.py
-  - system/systemd.py
-  - system/sysvinit.py
-  - system/user.py
-  - utilities/helper/_accelerate.py
-  - utilities/helper/meta.py
-  - utilities/logic/assert.py
-  - utilities/logic/async_status.py
-  - utilities/logic/async_wrapper.py
-  - utilities/logic/debug.py
-  - utilities/logic/fail.py
-  - utilities/logic/import_playbook.py
-  - utilities/logic/import_role.py
-  - utilities/logic/import_tasks.py
-  - utilities/logic/include.py
-  - utilities/logic/include_role.py
-  - utilities/logic/include_tasks.py
-  - utilities/logic/include_vars.py
-  - utilities/logic/pause.py
-  - utilities/logic/set_fact.py
-  - utilities/logic/set_stats.py
-  - utilities/logic/wait_for.py
-  - utilities/logic/wait_for_connection.py
+  connection:
+  - local.py
+  - paramiko_ssh.py
+  - psrp.py
+  - ssh.py
+  - winrm.py
+  test:
+  - core.py
+  - files.py
+  - mathstuff.py
+  filter:
+  - core.py
+  - mathstuff.py
+  - urls.py
+  - urlsplit.py
+  callback:
+  - default.py
+  - junit.py
+  - minimal.py
+  - oneline.py
+  - tree.py
   action:
   - add_host.py
   - assert.py
@@ -214,26 +236,6 @@ _core:
   - uri.py
   - wait_for_connection.py
   - yum.py
-  become:
-  - su.py
-  - sudo.py
-  cache:
-  - jsonfile.py
-  - memory.py
-  - pickle.py
-  - yaml.py
-  callback:
-  - default.py
-  - junit.py
-  - minimal.py
-  - oneline.py
-  - tree.py
-  connection:
-  - local.py
-  - paramiko_ssh.py
-  - psrp.py
-  - ssh.py
-  - winrm.py
   doc_fragments:
   - backup.py
   - constructed.py
@@ -246,21 +248,12 @@ _core:
   - url.py
   - validate.py
   - vars_plugin_staging.py
-  filter:
-  - core.py
-  - mathstuff.py
-  - urls.py
-  - urlsplit.py
-  inventory:
-  - advanced_host_list.py
-  - auto.py
-  - constructed.py
-  - generator.py
-  - host_list.py
-  - ini.py
-  - script.py
-  - toml.py
-  - yaml.py
+  become:
+  - su.py
+  - sudo.py
+  strategy:
+  - free.py
+  - linear.py
   lookup:
   - config.py
   - csvfile.py
@@ -286,25 +279,28 @@ _core:
   - url.py
   - varnames.py
   - vars.py
+  vars:
+  - host_group_vars.py
+  inventory:
+  - advanced_host_list.py
+  - auto.py
+  - constructed.py
+  - generator.py
+  - host_list.py
+  - ini.py
+  - script.py
+  - toml.py
+  - yaml.py
+  cache:
+  - jsonfile.py
+  - memory.py
+  - pickle.py
+  - yaml.py
   shell:
   - cmd.py
   - powershell.py
   - sh.py
-  strategy:
-  - free.py
-  - linear.py
-  test:
-  - core.py
-  - files.py
-  - mathstuff.py
-  vars:
-  - host_group_vars.py
 netcommon:
-  module_utils:
-  - network/common/*
-  - network/common/*/*
-  - network/netconf/*
-  - network/restconf/*
   modules:
   - network/cli/*
   - network/files/*
@@ -316,10 +312,17 @@ netcommon:
   - network/restconf/*
   - network/routing/*
   - network/system/*
+  module_utils:
+  - network/common/*
+  - network/common/*/*
+  - network/netconf/*
+  - network/restconf/*
   action:
   - cli_command.py
   - cli_config.py
   - net_*
+  - netconf.py
+  - network.py
   become:
   - enable.py
   connection:
