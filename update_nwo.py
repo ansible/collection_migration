@@ -78,7 +78,6 @@ class UpdateNWO:
         if galaxy_indexer:
             self.galaxy_indexer = galaxy_indexer
 
-        self.map_existing_files_to_rules()
         self.manage_checkout()
 
         # ansibot magic
@@ -92,6 +91,8 @@ class UpdateNWO:
         )
 
         self.get_plugins()
+        self.map_existing_files_to_rules()
+        self.map_botmeta_migrations_to_rules()
         self.map_plugins_to_collections()
 
         self.make_spec()
@@ -123,6 +124,42 @@ class UpdateNWO:
                             'name': name,
                             'source': sfile
                         })
+
+    def map_botmeta_migrations_to_rules(self):
+
+        ''' botmeta is also a source of truth for migrations '''
+
+        logger.info("map out BOTMETA's view of the world")
+
+        rules_added = 0
+        for pf in self.pluginfiles:
+            libix = pf[3].index('/lib/')
+            libpath = pf[3][libix+1:]
+            meta = self.component_matcher.get_meta_for_file(libpath)
+            if meta.get('migrated_to'):
+                mt = meta['migrated_to'][0]
+                namespace = mt.split('.')[0]
+                name = mt.split('.')[1]
+                if '/modules/' in libpath:
+                    plugin_type = libpath.split('/')[2]
+                else:
+                    plugin_type = libpath.split('/')[3]
+
+                # resembles what needs to go on each line in the specfile
+                matcher = self._make_relpath(libpath, plugintype=plugin_type)
+
+                # create the rule
+                rule = {
+                    'matcher': matcher,
+                    'name': name,
+                    'namespace': namespace,
+                    'plugin_type': plugin_type,
+                    'source': 'BOTMETA.yml'
+                }
+                self.rules.insert(0, rule)
+                rules_added += 1
+
+        logger.info('%s rules added from BOTMETA' % rules_added)
 
     def manage_checkout(self):
 
@@ -305,6 +342,7 @@ class UpdateNWO:
                 'name',
                 'current_support_level',
                 'new_support_level',
+                'botmeta_migrated_to',
                 'scenario_file',
                 'scenario_plugin_type',
                 'matched_line']
@@ -320,6 +358,9 @@ class UpdateNWO:
 
                 relpath = pf[3].replace(self.checkout_dir+'/', '')
                 meta = self.component_matcher.get_meta_for_file(relpath)
+                migrated_to = meta.get('migrated_to')
+                if migrated_to:
+                    migrated_to = migrated_to[0]
 
                 new_support = 'community'
                 if pf[2][0] == 'ansible' and pf[2][1] == '_core':
@@ -333,12 +374,13 @@ class UpdateNWO:
                     name,
                     meta['support'],
                     new_support,
+                    migrated_to,
                     'scenarios/nwo/%s.yml' % ns,
                     pf[4]['plugin_type'],
                     pf[4]['matcher']
                 ]
                 if ns == 'community' and name == 'general':
-                    row[6] = 'unclaimed!'
+                    row[7] = 'unclaimed!'
                 spamwriter.writerow(row)
 
     def _make_relpath(self, filename, plugintype):
