@@ -5,11 +5,11 @@ vyos:
   - network/vyos/*/*/*
   modules:
   - network/vyos/*
-  terminal:
-  - vyos.py
   action:
   - vyos.py
   cliconf:
   - vyos.py
   doc_fragments:
+  - vyos.py
+  terminal:
   - vyos.py

@@ -1,4 +1,6 @@
 aci:
+  module_utils:
+  - network/aci/aci.py
   modules:
   - network/aci/aci_aaa_user.py
   - network/aci/aci_aaa_user_certificate.py
@@ -67,74 +69,9 @@ aci:
   - network/aci/aci_vlan_pool_encap_block.py
   - network/aci/aci_vmm_credential.py
   - network/aci/aci_vrf.py
-  module_utils:
-  - network/aci/aci.py
-intersight:
-  modules:
-  - remote_management/intersight/_intersight_facts.py
-  - remote_management/intersight/intersight_rest_api.py
-  module_utils:
-  - remote_management/intersight.py
-  doc_fragments:
-  - intersight.py
-ios:
-  module_utils:
-  - network/ios/*
-  - network/ios/*/*
-  - network/ios/*/*/*
-  - network/ios/*/*/*/*
-  - network/ios/*/*/*/*/*
-  modules:
-  - network/ios/*
-  terminal:
-  - ios.py
-  action:
-  - ios.py
-  cliconf:
-  - ios.py
-  doc_fragments:
-  - ios.py
-iosxr:
-  module_utils:
-  - network/iosxr/*
-  - network/iosxr/*/*
-  - network/iosxr/*/*/*
-  - network/iosxr/*/*/*/*
-  - network/iosxr/*/*/*/*/*
-  modules:
-  - network/iosxr/*
-  terminal:
-  - iosxr.py
-  action:
-  - iosxr.py
-  cliconf:
-  - iosxr.py
-  doc_fragments:
-  - iosxr.py
-  netconf:
-  - iosxr.py
-meraki:
-  modules:
-  - network/meraki/meraki_admin.py
-  - network/meraki/meraki_config_template.py
-  - network/meraki/meraki_content_filtering.py
-  - network/meraki/meraki_device.py
-  - network/meraki/meraki_firewalled_services.py
-  - network/meraki/meraki_malware.py
-  - network/meraki/meraki_mr_l3_firewall.py
-  - network/meraki/meraki_mx_l3_firewall.py
-  - network/meraki/meraki_mx_l7_firewall.py
-  - network/meraki/meraki_nat.py
-  - network/meraki/meraki_network.py
-  - network/meraki/meraki_organization.py
-  - network/meraki/meraki_snmp.py
-  - network/meraki/meraki_ssid.py
-  - network/meraki/meraki_static_route.py
-  - network/meraki/meraki_switchport.py
-  - network/meraki/meraki_syslog.py
-  - network/meraki/meraki_vlan.py
-  - network/meraki/meraki_webhook.py
 mso:
+  module_utils:
+  - network/aci/mso.py
   modules:
   - network/aci/mso_label.py
   - network/aci/mso_role.py
@@ -169,8 +106,23 @@ mso:
   - network/aci/mso_site.py
   - network/aci/mso_tenant.py
   - network/aci/mso_user.py
+ios:
   module_utils:
-  - network/aci/mso.py
+  - network/ios/*
+  - network/ios/*/*
+  - network/ios/*/*/*
+  - network/ios/*/*/*/*
+  - network/ios/*/*/*/*/*
+  modules:
+  - network/ios/*
+  action:
+  - ios.py
+  cliconf:
+  - ios.py
+  doc_fragments:
+  - ios.py
+  terminal:
+  - ios.py
 nxos:
   module_utils:
   - network/nxos/*
@@ -190,7 +142,17 @@ nxos:
   - nxos.py
   terminal:
   - nxos.py
+intersight:
+  module_utils:
+  - remote_management/intersight.py
+  modules:
+  - remote_management/intersight/_intersight_facts.py
+  - remote_management/intersight/intersight_rest_api.py
+  doc_fragments:
+  - intersight.py
 ucs:
+  module_utils:
+  - remote_management/ucs.py
   modules:
   - remote_management/ucs/ucs_ip_pool.py
   - remote_management/ucs/ucs_mac_pool.py
@@ -199,7 +161,37 @@ ucs:
   - remote_management/ucs/ucs_service_profile_template.py
   - remote_management/ucs/ucs_uuid_pool.py
   - remote_management/ucs/ucs_vlans.py
-  module_utils:
-  - remote_management/ucs.py
   doc_fragments:
   - ucs.py
+meraki:
+  modules:
+  - network/meraki/meraki_admin.py
+  - network/meraki/meraki_config_template.py
+  - network/meraki/meraki_content_filtering.py
+  - network/meraki/meraki_device.py
+  - network/meraki/meraki_firewalled_services.py
+  - network/meraki/meraki_malware.py
+  - network/meraki/meraki_mr_l3_firewall.py
+  - network/meraki/meraki_mx_l3_firewall.py
+  - network/meraki/meraki_mx_l7_firewall.py
+  - network/meraki/meraki_nat.py
+  - network/meraki/meraki_network.py
+  - network/meraki/meraki_organization.py
+  - network/meraki/meraki_snmp.py
+  - network/meraki/meraki_ssid.py
+  - network/meraki/meraki_static_route.py
+  - network/meraki/meraki_switchport.py
+  - network/meraki/meraki_syslog.py
+  - network/meraki/meraki_vlan.py
+  - network/meraki/meraki_webhook.py
+iosxr:
+  action:
+  - iosxr.py
+  cliconf:
+  - iosxr.py
+  doc_fragments:
+  - iosxr.py
+  netconf:
+  - iosxr.py
+  terminal:
+  - iosxr.py

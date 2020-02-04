@@ -5,8 +5,6 @@ junos:
   - network/junos/*/*/*
   modules:
   - network/junos/*
-  terminal:
-  - junos.py
   action:
   - junos.py
   cliconf:
@@ -14,4 +12,6 @@ junos:
   doc_fragments:
   - junos.py
   netconf:
+  - junos.py
+  terminal:
   - junos.py
