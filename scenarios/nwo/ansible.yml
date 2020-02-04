@@ -1,75 +1,103 @@
 _core:
-  modules:
-  - commands/command.py
-  - commands/expect.py
-  - commands/raw.py
-  - commands/script.py
-  - commands/shell.py
-  - files/blockinfile.py
-  - files/copy.py
-  - files/fetch.py
-  - files/file.py
-  - files/find.py
-  - files/lineinfile.py
-  - files/replace.py
-  - files/stat.py
-  - files/tempfile.py
-  - files/template.py
-  - files/unarchive.py
-  - inventory/add_host.py
-  - inventory/group_by.py
-  - net_tools/basics/get_url.py
-  - net_tools/basics/slurp.py
-  - net_tools/basics/uri.py
-  - packaging/language/pip.py
-  - packaging/os/apt.py
-  - packaging/os/apt_key.py
-  - packaging/os/apt_repo.py
-  - packaging/os/apt_repository.py
-  - packaging/os/dnf.py
-  - packaging/os/dpkg_selections.py
-  - packaging/os/package.py
-  - packaging/os/package_facts.py
-  - packaging/os/rpm_key.py
-  - packaging/os/yum.py
-  - packaging/os/yum_repository.py
-  - source_control/git.py
-  - source_control/subversion.py
-  - system/cron.py
-  - system/debconf.py
-  - system/gather_facts.py
-  - system/getent.py
-  - system/group.py
-  - system/hostname.py
-  - system/iptables.py
-  - system/known_hosts.py
-  - system/ping.py
-  - system/reboot.py
-  - system/service.py
-  - system/service_facts.py
-  - system/setup.py
-  - system/systemd.py
-  - system/sysvinit.py
-  - system/user.py
-  - utilities/helper/_accelerate.py
-  - utilities/helper/meta.py
-  - utilities/logic/assert.py
-  - utilities/logic/async_status.py
-  - utilities/logic/async_wrapper.py
-  - utilities/logic/debug.py
-  - utilities/logic/fail.py
-  - utilities/logic/import_playbook.py
-  - utilities/logic/import_role.py
-  - utilities/logic/import_tasks.py
-  - utilities/logic/include.py
-  - utilities/logic/include_role.py
-  - utilities/logic/include_tasks.py
-  - utilities/logic/include_vars.py
-  - utilities/logic/pause.py
-  - utilities/logic/set_fact.py
-  - utilities/logic/set_stats.py
-  - utilities/logic/wait_for.py
-  - utilities/logic/wait_for_connection.py
+  action:
+  - add_host.py
+  - assert.py
+  - async_status.py
+  - command.py
+  - copy.py
+  - debug.py
+  - fail.py
+  - fetch.py
+  - gather_facts.py
+  - group_by.py
+  - include_vars.py
+  - normal.py
+  - package.py
+  - pause.py
+  - raw.py
+  - reboot.py
+  - script.py
+  - service.py
+  - set_fact.py
+  - set_stats.py
+  - shell.py
+  - template.py
+  - unarchive.py
+  - uri.py
+  - wait_for_connection.py
+  - yum.py
+  become:
+  - su.py
+  - sudo.py
+  cache:
+  - jsonfile.py
+  - memory.py
+  - pickle.py
+  - yaml.py
+  callback:
+  - default.py
+  - junit.py
+  - minimal.py
+  - oneline.py
+  - tree.py
+  connection:
+  - local.py
+  - paramiko_ssh.py
+  - psrp.py
+  - ssh.py
+  - winrm.py
+  doc_fragments:
+  - backup.py
+  - constructed.py
+  - decrypt.py
+  - default_callback.py
+  - files.py
+  - inventory_cache.py
+  - return_common.py
+  - shell_common.py
+  - url.py
+  - validate.py
+  - vars_plugin_staging.py
+  filter:
+  - core.py
+  - mathstuff.py
+  - urls.py
+  - urlsplit.py
+  inventory:
+  - advanced_host_list.py
+  - auto.py
+  - constructed.py
+  - generator.py
+  - host_list.py
+  - ini.py
+  - script.py
+  - toml.py
+  - yaml.py
+  lookup:
+  - config.py
+  - csvfile.py
+  - dict.py
+  - env.py
+  - file.py
+  - fileglob.py
+  - first_found.py
+  - indexed_items.py
+  - ini.py
+  - inventory_hostnames.py
+  - items.py
+  - lines.py
+  - list.py
+  - nested.py
+  - password.py
+  - pipe.py
+  - random_choice.py
+  - sequence.py
+  - subelements.py
+  - template.py
+  - together.py
+  - url.py
+  - varnames.py
+  - vars.py
   module_utils:
   - _text.py
   - ansible_release.py
@@ -184,145 +212,98 @@ _core:
   - powershell/Ansible.ModuleUtils.SID.psm1
   - powershell/Ansible.ModuleUtils.WebRequest.psm1
   - service.py
-  - six/*
   - splitter.py
   - urls.py
   - yumdnf.py
-  connection:
-  - local.py
-  - paramiko_ssh.py
-  - psrp.py
-  - ssh.py
-  - winrm.py
-  test:
-  - core.py
-  - files.py
-  - mathstuff.py
-  filter:
-  - core.py
-  - mathstuff.py
-  - urls.py
-  - urlsplit.py
-  callback:
-  - default.py
-  - junit.py
-  - minimal.py
-  - oneline.py
-  - tree.py
-  action:
-  - add_host.py
-  - assert.py
-  - async_status.py
-  - command.py
-  - copy.py
-  - debug.py
-  - fail.py
-  - fetch.py
-  - gather_facts.py
-  - group_by.py
-  - include_vars.py
-  - normal.py
-  - package.py
-  - pause.py
-  - raw.py
-  - reboot.py
-  - script.py
-  - service.py
-  - set_fact.py
-  - set_stats.py
-  - shell.py
-  - template.py
-  - unarchive.py
-  - uri.py
-  - wait_for_connection.py
-  - yum.py
-  doc_fragments:
-  - backup.py
-  - constructed.py
-  - decrypt.py
-  - default_callback.py
-  - files.py
-  - inventory_cache.py
-  - return_common.py
-  - shell_common.py
-  - url.py
-  - validate.py
-  - vars_plugin_staging.py
-  become:
-  - su.py
-  - sudo.py
-  strategy:
-  - free.py
-  - linear.py
-  lookup:
-  - config.py
-  - csvfile.py
-  - dict.py
-  - env.py
-  - file.py
-  - fileglob.py
-  - first_found.py
-  - indexed_items.py
-  - ini.py
-  - inventory_hostnames.py
-  - items.py
-  - lines.py
-  - list.py
-  - nested.py
-  - password.py
-  - pipe.py
-  - random_choice.py
-  - sequence.py
-  - subelements.py
-  - template.py
-  - together.py
-  - url.py
-  - varnames.py
-  - vars.py
-  vars:
-  - host_group_vars.py
-  inventory:
-  - advanced_host_list.py
-  - auto.py
-  - constructed.py
-  - generator.py
-  - host_list.py
-  - ini.py
-  - script.py
-  - toml.py
-  - yaml.py
-  cache:
-  - jsonfile.py
-  - memory.py
-  - pickle.py
-  - yaml.py
+  modules:
+  - commands/command.py
+  - commands/expect.py
+  - commands/raw.py
+  - commands/script.py
+  - commands/shell.py
+  - files/blockinfile.py
+  - files/copy.py
+  - files/fetch.py
+  - files/file.py
+  - files/find.py
+  - files/lineinfile.py
+  - files/replace.py
+  - files/stat.py
+  - files/tempfile.py
+  - files/template.py
+  - files/unarchive.py
+  - inventory/add_host.py
+  - inventory/group_by.py
+  - net_tools/basics/get_url.py
+  - net_tools/basics/slurp.py
+  - net_tools/basics/uri.py
+  - packaging/language/pip.py
+  - packaging/os/apt.py
+  - packaging/os/apt_key.py
+  - packaging/os/apt_repo.py
+  - packaging/os/apt_repository.py
+  - packaging/os/dnf.py
+  - packaging/os/dpkg_selections.py
+  - packaging/os/package.py
+  - packaging/os/package_facts.py
+  - packaging/os/rpm_key.py
+  - packaging/os/yum.py
+  - packaging/os/yum_repository.py
+  - source_control/git.py
+  - source_control/subversion.py
+  - system/cron.py
+  - system/debconf.py
+  - system/gather_facts.py
+  - system/getent.py
+  - system/group.py
+  - system/hostname.py
+  - system/iptables.py
+  - system/known_hosts.py
+  - system/ping.py
+  - system/reboot.py
+  - system/service.py
+  - system/service_facts.py
+  - system/setup.py
+  - system/systemd.py
+  - system/sysvinit.py
+  - system/user.py
+  - utilities/helper/_accelerate.py
+  - utilities/helper/meta.py
+  - utilities/logic/assert.py
+  - utilities/logic/async_status.py
+  - utilities/logic/async_wrapper.py
+  - utilities/logic/debug.py
+  - utilities/logic/fail.py
+  - utilities/logic/import_playbook.py
+  - utilities/logic/import_role.py
+  - utilities/logic/import_tasks.py
+  - utilities/logic/include.py
+  - utilities/logic/include_role.py
+  - utilities/logic/include_tasks.py
+  - utilities/logic/include_vars.py
+  - utilities/logic/pause.py
+  - utilities/logic/set_fact.py
+  - utilities/logic/set_stats.py
+  - utilities/logic/wait_for.py
+  - utilities/logic/wait_for_connection.py
   shell:
   - cmd.py
   - powershell.py
   - sh.py
+  strategy:
+  - free.py
+  - linear.py
+  test:
+  - core.py
+  - files.py
+  - mathstuff.py
+  vars:
+  - host_group_vars.py
 netcommon:
-  modules:
-  - network/cli/*
-  - network/files/*
-  - network/interface/*
-  - network/layer2/*
-  - network/layer3/*
-  - network/netconf/*
-  - network/protocol/*
-  - network/restconf/*
-  - network/routing/*
-  - network/system/*
-  module_utils:
-  - network/common/*
-  - network/common/*/*
-  - network/netconf/*
-  - network/restconf/*
   action:
   - cli_command.py
   - cli_config.py
   - net_*
-  - netconf.py
-  - network.py
   become:
   - enable.py
   connection:
@@ -337,5 +318,21 @@ netcommon:
   - network.py
   httpapi:
   - restconf.py
+  module_utils:
+  - network/common/*
+  - network/common/*/*
+  - network/netconf/*
+  - network/restconf/*
+  modules:
+  - network/cli/*
+  - network/files/*
+  - network/interface/*
+  - network/layer2/*
+  - network/layer3/*
+  - network/netconf/*
+  - network/protocol/*
+  - network/restconf/*
+  - network/routing/*
+  - network/system/*
   netconf:
   - default.py
