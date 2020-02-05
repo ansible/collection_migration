@@ -69,7 +69,7 @@ class UpdateNWO:
 
         self.rules = []
 
-    def run(self, usecache=False, galaxy_indexer=None, base_scenario_file=None, writeall=False):
+    def run(self, usecache=False, galaxy_indexer=None, base_scenario_file=None, writeall=False, use_botmeta=True):
 
         if os.path.exists(self.scenario_output_dir):
             shutil.rmtree(self.scenario_output_dir)
@@ -92,7 +92,8 @@ class UpdateNWO:
 
         self.get_plugins()
         self.map_existing_files_to_rules()
-        self.map_botmeta_migrations_to_rules()
+        if use_botmeta:
+            self.map_botmeta_migrations_to_rules()
         self.map_plugins_to_collections()
 
         self.make_spec(writeall=writeall)
@@ -216,7 +217,22 @@ class UpdateNWO:
                     matched_rules.append(rule)
                     continue
 
+        # keep init files in base unless otherwise specified
+        if plugin_basename == "__init__.py" and not matched_rules:
+            iparts = plugin_relpath.split('/')
+            if len(iparts) in [1] or iparts[0] in ['csharp', 'common', 'facts', 'powershell']:
+                return (
+                    'ansible',
+                    '_core', 
+                    {
+                        'plugin_type': plugin_type,
+                        'matcher': plugin_relpath,
+                        'namespace': 'ansible',
+                        'name': '_core'
+                    }
+                )
 
+        # pick the "best" rule?
         if len(matched_rules) == 1:
             return (matched_rules[0]['namespace'], matched_rules[0]['name'], matched_rules[0])        
         elif len(matched_rules) > 1:
@@ -226,6 +242,7 @@ class UpdateNWO:
                 if len(mpaths) == len(ppaths):
                     return (mr['namespace'], mr['name'], mr)        
 
+        # default to community dumping ground
         return (
             self.DUMPING_GROUND[0],
             self.DUMPING_GROUND[1],
@@ -246,7 +263,8 @@ class UpdateNWO:
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'modules')
         for dirName, subdirList, fileList in os.walk(root):
 
-            for fn in set(fileList) - {'__init__.py', 'loader.py'}:
+            #for fn in set(fileList) - {'__init__.py', 'loader.py'}:
+            for fn in set(fileList):
                 fp = os.path.join(dirName, fn)
                 topic = None
                 self.pluginfiles.append(['modules', fn, topic, fp])
@@ -256,7 +274,8 @@ class UpdateNWO:
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'module_utils')
         for dirName, subdirList, fileList in os.walk(root):
 
-            for fn in set(fileList) - {'__init__.py', 'loader.py'}:
+            #for fn in set(fileList) - {'__init__.py', 'loader.py'}:
+            for fn in set(fileList):
                 fp = os.path.join(dirName, fn)
                 #topic = self._guess_topic(fp)
                 topic = None
@@ -267,7 +286,8 @@ class UpdateNWO:
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'plugins')
         for dirName, subdirList, fileList in os.walk(root):
 
-            for fn in set(fileList) - {'__init__.py', 'loader.py'}:
+            #for fn in set(fileList) - {'__init__.py', 'loader.py'}:
+            for fn in set(fileList):
                 ptype = os.path.basename(dirName)
                 fp = os.path.join(dirName, fn)
                 self.pluginfiles.append([ptype, fn, None, fp])
@@ -299,7 +319,8 @@ class UpdateNWO:
         root = os.path.join(self.checkout_dir, 'lib', 'ansible', 'modules')
         for dirName, subdirList, fileList in os.walk(root):
 
-            for fn in set(fileList) - {'__init__.py', 'loader.py'}:
+            #for fn in set(fileList) - {'__init__.py', 'loader.py'}:
+            for fn in set(fileList):
                 fp = os.path.join(dirName, fn)
                 topic = os.path.relpath(fp, root)
                 topic = os.path.dirname(topic)
@@ -430,7 +451,7 @@ class UpdateNWO:
             logger.info('write %s' % fn)
             with open(fn, 'w') as f:
 
-                if namespace != 'community' and not writeall:
+                if not writeall and namespace != 'community':
                     ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
                 else:
                     if namespace == 'community':
@@ -438,14 +459,42 @@ class UpdateNWO:
                         this_data['general'] = collections['general']
                     else:
                         this_data = collections
-                    ruamel.yaml.dump(this_data, f, Dumper=ruamel.yaml.RoundTripDumper)
+
+                    # sort all keys
+                    nd = {}
+                    names = sorted(list(this_data.keys()))
+                    for name in names:
+                        nd[name] = {}
+
+                        ptypes = sorted(list(this_data[name].keys()))
+                        ptypes += sorted(list(self.scenario_cache[namespace][name].keys()))
+                        ptypes = sorted(set(ptypes))
+                        ptypes = [x for x in ptypes if x != 'plugins']
+
+                        for ptype in ptypes:
+                            #if ptype == 'plugins':
+                            #    import epdb; epdb.st()
+                            if ptype in this_data[name]:
+                                nd[name][ptype] = sorted(this_data[name][ptype])
+                            if ptype in self.scenario_cache[namespace][name]:
+                                if ptype not in nd[name]:
+                                    nd[name][ptype] = []
+                                nd[name][ptype] += self.scenario_cache[namespace][name][ptype]
+                                nd[name][ptype] = sorted(set(nd[name][ptype]))
+
+                    #if namespace == 'cisco':
+                    #    import epdb; epdb.st() 
+
+                    #ruamel.yaml.dump(this_data, f, Dumper=ruamel.yaml.RoundTripDumper)
+                    ruamel.yaml.dump(nd, f, Dumper=ruamel.yaml.RoundTripDumper)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--usecache', action='store_true')
+    parser.add_argument('--nobotmeta', action='store_true', help="ignore botmeta processing")
     parser.add_argument('--writeall', action='store_true', help="write out all specs instead of just community")
     args = parser.parse_args()
 
     nwo = UpdateNWO()
-    nwo.run(usecache=args.usecache, writeall=args.writeall)
+    nwo.run(usecache=args.usecache, writeall=args.writeall, use_botmeta=not args.nobotmeta)
