@@ -344,6 +344,7 @@ def load_spec_file(spec_file):
 
 def resolve_spec(spec, checkoutdir):
     # TODO: add negation? entry: x/* \n entry: !x/base.py
+    files_to_collections = defaultdict(list)
     for ns in spec.keys():
         for coll in spec[ns].keys():
             for ptype in spec[ns][coll].keys():
@@ -365,6 +366,10 @@ def resolve_spec(spec, checkoutdir):
 
                         # clean out glob entry
                         spec[ns][coll][ptype].remove(entry)
+
+                # NOTE now that spec for plugins of ptype has been finalized, we can iterate again and add files for the dupe check
+                for entry in spec[ns][coll][ptype]:
+                    files_to_collections[os.path.join(plugin_base, entry)].append(coll)
 
                 def dir_to_path(path):
                     if not (os.path.isdir(path) and os.path.exists(path)):
@@ -394,21 +399,9 @@ def resolve_spec(spec, checkoutdir):
                     ptype, ns, coll,
                 )
 
-
-    # multiple collections check
-    files_to_collections = defaultdict(list)
-    for ns, collections in spec.items():
-        for coll, plugin_types in collections.items():
-            for ptype, plugins in plugin_types.items():
-                for plugin in plugins:
-                    if ptype in ['modules', 'module_utils']:
-                        file_path = os.path.join('lib/ansible', ptype, plugin)
-                    else:
-                        file_path = os.path.join('lib/ansible/plugins', ptype, plugin)
-                    files_to_collections[file_path].append(coll)
     dupes = {k: v for k, v in files_to_collections.items() if len(v) > 1}
     if dupes:
-        err_msg = 'The following files are assigned to multiple collections:\n' + yaml.dump(dupes)
+        err_msg = 'Each plugin needs to be assigned to one collection only. The following files are assigned to multiple collections:\n' + yaml.dump(dupes)
         logger.error(err_msg)
         raise RuntimeError(err_msg)
 
