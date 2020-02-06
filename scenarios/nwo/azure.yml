@@ -6,14 +6,6 @@ azcollection:
   - azure_rm_common_ext.py
   - azure_rm_common_rest.py
   modules:
-  - cloud/azure/_azure_rm_dnsrecordset_facts.py
-  - cloud/azure/_azure_rm_dnszone_facts.py
-  - cloud/azure/_azure_rm_networkinterface_facts.py
-  - cloud/azure/_azure_rm_publicipaddress_facts.py
-  - cloud/azure/_azure_rm_securitygroup_facts.py
-  - cloud/azure/_azure_rm_storageaccount_facts.py
-  - cloud/azure/_azure_rm_virtualmachine_facts.py
-  - cloud/azure/_azure_rm_virtualnetwork_facts.py
   - cloud/azure/azure_rm_deployment.py
   - cloud/azure/azure_rm_dnsrecordset.py
   - cloud/azure/azure_rm_dnszone.py
