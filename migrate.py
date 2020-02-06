@@ -408,7 +408,7 @@ def resolve_spec(spec, checkoutdir):
                     files_to_collections[file_path].append(coll)
     dupes = {k: v for k, v in files_to_collections.items() if len(v) > 1}
     if dupes:
-        err_msg = 'The following files are assigned to multiple collections:\n' + yaml.dump(dict(dupes))
+        err_msg = 'The following files are assigned to multiple collections:\n' + yaml.dump(dupes)
         logger.error(err_msg)
         raise RuntimeError(err_msg)
 
