@@ -1544,9 +1544,6 @@ def assert_migrating_git_tracked_resources(
     :param migrated_to_collection: Iterable of paths relative \
                                    to the ansible/ansible root.
     """
-    logger.info(
-        'Verifying that only legitimate files are being migrated...',
-    )
     for migrated_resource in migrated_to_collection:
         exists_in_src = migrated_resource in ALL_THE_FILES
         if not exists_in_src:
