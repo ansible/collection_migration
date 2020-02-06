@@ -1558,6 +1558,7 @@ def assert_migrating_git_tracked_resources(
 def mark_moved_resources(checkout_dir, namespace, collection, migrated_to_collection):
     """Mark migrated paths in botmeta."""
     migrated_to_collection = {str(k): str(v) for k, v in migrated_to_collection.items()}
+    logger.info('Verifying that only git-tracked files are being migrated...')
     assert_migrating_git_tracked_resources(migrated_to_collection)
 
     migrated_to = '.'.join((namespace, collection))
