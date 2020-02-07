@@ -1,6 +1,8 @@
 aci:
   module_utils:
   - network/aci/aci.py
+  doc_fragments:
+  - aci.py
   modules:
   - network/aci/aci_aaa_user.py
   - network/aci/aci_aaa_user_certificate.py
