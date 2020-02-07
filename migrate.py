@@ -25,6 +25,7 @@ from typing import Any, Dict, Iterable, Set, Union
 
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.vars.reserved import is_reserved_name
 
 import logzero
@@ -2114,6 +2115,11 @@ def main():
                 subprocess.check_call((script, os.path.join(devel_path, plugin_base)))
 
         logger.info('Starting the migration...')
+
+        # we need to be able to import collections when evaluating filters and tests
+        loader = AnsibleCollectionLoader()
+        loader._n_configured_paths = [os.path.join(args.vardir, 'collections')]
+        sys.meta_path.insert(0, loader)
 
         # doeet
         assemble_collections(devel_path, spec, args, args.target_github_org)
