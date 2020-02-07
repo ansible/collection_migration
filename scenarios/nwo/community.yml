@@ -207,7 +207,6 @@ general:
   - shell_windows.py
   - skydive.py
   - sros.py
-  - template_common.py
   - tower.py
   - url_windows.py
   - utm.py
