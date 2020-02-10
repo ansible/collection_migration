@@ -1703,18 +1703,19 @@ def get_processed_aliases(checkout_dir):
         'unsupported',
     })
     res = defaultdict(set)
-    targets_dir = os.path.join(checkout_dir, 'test/integration/targets')
-    for dirpath, dirnames, filenames in os.walk(targets_dir):
-        for target in dirnames:
-            target_dir = os.path.join(targets_dir, target)
-            aliases_file = os.path.join(target_dir, 'aliases')
-            if not os.path.exists(aliases_file):
+    targets_dir = os.path.join(checkout_dir, 'test/integration/targets/')
+    for target in os.listdir(targets_dir):
+        target_dir = os.path.join(targets_dir, target)
+        if not os.path.isdir(target_dir):
+            continue
+        aliases_file = os.path.join(target_dir, 'aliases')
+        if not os.path.exists(aliases_file):
+            continue
+        for line in read_text_from_file(aliases_file).splitlines():
+            line = line.strip()
+            if not line or any(ignored_alias in line for ignored_alias in ignored_alias_patterns):
                 continue
-            for line in read_text_from_file(aliases_file).splitlines():
-                line = line.strip()
-                if not line or any(True for ignored_alias in ignored_alias_patterns if ignored_alias in line):
-                    continue
-                res[line].add(target_dir)
+            res[line].add(target_dir)
     processed_aliases = res
 
     return processed_aliases
