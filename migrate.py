@@ -359,7 +359,13 @@ def load_spec_file(spec_file):
     return spec
 
 
-def resolve_spec(spec, checkoutdir):
+def resolve_spec(spec, checkoutdir, all_the_files=None):
+
+    global ALL_THE_FILES
+
+    if all_the_files:
+        ALL_THE_FILES = all_the_files
+
     # TODO: add negation? entry: x/* \n entry: !x/base.py
     files_to_collections = defaultdict(list)
     for ns in spec.keys():
@@ -1580,6 +1586,7 @@ def assert_migrating_git_tracked_resources(
     for migrated_resource in migrated_to_collection:
         exists_in_src = migrated_resource in ALL_THE_FILES
         if not exists_in_src:
+            import epdb; epdb.st()
             err_msg = (
                 f'{migrated_resource} does not '
                 'exist in the source'
@@ -2112,6 +2119,7 @@ def setup_options(parser):
     parser.add_argument('--convert-symlinks', action='store_true', dest='convert_symlinks', default=False,
                         help='Convert symlinks to data copies to allow aliases to exist in different collections from original.',)
     parser.add_argument('--limit', dest='limits', action='append', help="process only matching fqns [namespace.name] or fqcns which contain this substring")
+    parser.add_argument('--exclude', dest='excludes', action='append', help="do not process matching fqns [namespace.name] or fqcns which contain this substring")
 
 
 def main():
