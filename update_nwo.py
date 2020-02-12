@@ -33,11 +33,17 @@ import ruamel.yaml
 import git as pygit
 from sh import git
 from sh import find
+from sh import sha1sum
 
 from pprint import pprint
 
 from ansibullbot.utils.component_tools import AnsibleComponentMatcher
 from ansibullbot.utils.git_tools import GitRepoWrapper
+
+
+def get_sha(filename):
+    res = sha1sum(filename)
+    return res.stdout.split()[0]
 
 
 class UpdateNWO:
@@ -98,7 +104,7 @@ class UpdateNWO:
 
         self.make_spec(writeall=writeall, inplace=inplace)
         if writecsv:
-            self.make_compiled_csv()
+            self.make_compiled_csv(inplace=inplace)
 
     def map_existing_files_to_rules(self):
 
@@ -349,7 +355,7 @@ class UpdateNWO:
         logger.info('files matching done')
         self.pluginfiles = sorted(self.pluginfiles, key=lambda x: x[3])
 
-    def make_compiled_csv(self):
+    def make_compiled_csv(self, inplace=False):
         
         ''' Make the human readable aggregated spreadsheet '''
 
@@ -493,6 +499,23 @@ class UpdateNWO:
 
                     #ruamel.yaml.dump(this_data, f, Dumper=ruamel.yaml.RoundTripDumper)
                     ruamel.yaml.dump(nd, f, Dumper=ruamel.yaml.RoundTripDumper)
+
+        if inplace:
+            a = sorted(glob.glob('scenarios/%s/*' % self.SCENARIO))
+            b = sorted(glob.glob('%s/*' % self.scenario_output_dir))
+
+            found = []
+            for bfile in b:
+                bfile_sha = get_sha(bfile)
+                bbasen = os.path.basename(bfile)
+                afile = os.path.join('scenarios', self.SCENARIO, bbasen)
+                abasen = os.path.basename(afile)
+                afile_sha = get_sha(afile)
+
+                if afile_sha != bfile_sha:
+                    logger.info('copy %s to %s' % (bfile, afile))
+                    os.remove(afile)
+                    shutil.copyfile(bfile, afile)
 
 
 if __name__ == "__main__":
