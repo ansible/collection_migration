@@ -458,7 +458,7 @@ class UpdateNWO:
             with open(fn, 'w') as f:
 
                 if not writeall and namespace != 'community':
-                    logger.info('copy %s' % fn)
+                    logger.info('duplicate %s' % fn)
                     ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
                 else:
                     logger.info('rewrite %s' % fn)
@@ -467,9 +467,6 @@ class UpdateNWO:
                         this_data['general'] = collections['general']
                     else:
                         this_data = collections
-
-                    #if namespace == 'community':
-                    #    import epdb; epdb.st()
 
                     # sort all keys
                     nd = {}
@@ -494,11 +491,10 @@ class UpdateNWO:
                                     nd[name][ptype] += self.scenario_cache[namespace][name][ptype]
                                 nd[name][ptype] = sorted(set(nd[name][ptype]))
 
-                    #if namespace == 'cisco':
-                    #    import epdb; epdb.st() 
-
-                    #ruamel.yaml.dump(this_data, f, Dumper=ruamel.yaml.RoundTripDumper)
                     ruamel.yaml.dump(nd, f, Dumper=ruamel.yaml.RoundTripDumper)
+
+
+        # validate there are no dupes!
 
         if inplace:
             a = sorted(glob.glob('scenarios/%s/*' % self.SCENARIO))
@@ -516,6 +512,8 @@ class UpdateNWO:
                     logger.info('copy %s to %s' % (bfile, afile))
                     os.remove(afile)
                     shutil.copyfile(bfile, afile)
+                else:
+                    logger.info('no changes for %s' % afile)
 
 
 if __name__ == "__main__":
