@@ -69,7 +69,7 @@ class UpdateNWO:
 
         self.rules = []
 
-    def run(self, usecache=False, galaxy_indexer=None, base_scenario_file=None, writeall=False, use_botmeta=True):
+    def run(self, usecache=False, galaxy_indexer=None, base_scenario_file=None, writeall=False, use_botmeta=True, inplace=False, writecsv=True):
 
         if os.path.exists(self.scenario_output_dir):
             shutil.rmtree(self.scenario_output_dir)
@@ -96,8 +96,9 @@ class UpdateNWO:
             self.map_botmeta_migrations_to_rules()
         self.map_plugins_to_collections()
 
-        self.make_spec(writeall=writeall)
-        self.make_compiled_csv()
+        self.make_spec(writeall=writeall, inplace=inplace)
+        if writecsv:
+            self.make_compiled_csv()
 
     def map_existing_files_to_rules(self):
 
@@ -411,7 +412,7 @@ class UpdateNWO:
         relpath = filename[pindex+len(plugintype)+2:]
         return relpath
 
-    def make_spec(self, writeall=False):
+    def make_spec(self, writeall=False, inplace=False):
 
         # make specfile ready dicts for each collection
         for idx,x in enumerate(self.pluginfiles):
@@ -497,9 +498,11 @@ class UpdateNWO:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--usecache', action='store_true')
+    parser.add_argument('--inplace', action='store_true')
+    parser.add_argument('--nocsv', action='store_true')
     parser.add_argument('--nobotmeta', action='store_true', help="ignore botmeta processing")
     parser.add_argument('--writeall', action='store_true', help="write out all specs instead of just community")
     args = parser.parse_args()
 
     nwo = UpdateNWO()
-    nwo.run(usecache=args.usecache, writeall=args.writeall, use_botmeta=not args.nobotmeta)
+    nwo.run(usecache=args.usecache, writeall=args.writeall, use_botmeta=not args.nobotmeta, inplace=args.inplace, writecsv=not args.nocsv)
