@@ -46,6 +46,54 @@ def get_sha(filename):
     return res.stdout.split()[0]
 
 
+def collection_diff(a, b):
+    collections = list(a.keys())
+    collections += list(b.keys())
+    collections = sorted(set(collections))
+
+    delta = {}
+    for cn in collections:
+        if cn not in a or cn not in b:
+            if 'missing_collections' not in delta:
+                delta['missing_collections'] = []
+            if cn not in a:
+                delta['missing_collections'].append(['a', cn])
+            else:
+                delta['missing_collections'].append(['b', cn])
+            continue
+
+        plugin_types = list(a[cn].keys())
+        plugin_types += list(b[cn].keys())
+        plugin_types = sorted(set(plugin_types))
+
+        for pt in plugin_types:
+            if pt not in a[cn] or pt not in b[cn]:
+                if 'missing_plugin_types' not in delta:
+                    delta['missing_plugin_types'] = []
+                if pt not in a[cn]:
+                    delta['missing_plugin_types'].append(['a', cn, pt])
+                else:
+                    delta['missing_plugin_types'].append(['b', cn, pt])
+                continue
+
+            files = a[cn][pt][:]
+            files += b[cn][pt][:]
+            files = sorted(set(files))
+
+            for filen in files:
+                if filen not in a[cn][pt] or filen not in b[cn][pt]:
+                    dkey = 'missing_%s' % pt
+                    if dkey not in delta:
+                        delta[dkey] = []
+                    if filen not in a[cn][pt]:
+                        delta[dkey].append(['a', cn, filen])
+                    else:
+                        delta[dkey].append(['b', cn, filen])
+
+    #import epdb; epdb.st()
+    return delta
+
+
 class UpdateNWO:
 
     SCENARIO = 'nwo'
@@ -467,6 +515,17 @@ class UpdateNWO:
                         this_data['general'] = collections['general']
                     else:
                         this_data = collections
+
+                    # check for diff ...
+                    cdiff = collection_diff(self.scenario_cache[namespace], this_data)
+                    if not cdiff:
+                        logger.info('duplicate %s' % fn)
+                        ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
+                        continue
+
+                    pprint(cdiff)
+
+                    logger.info('rewrite %s' % fn)
 
                     # sort all keys
                     nd = {}
