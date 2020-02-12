@@ -54,7 +54,7 @@ ALL_THE_FILES = set()
 
 COLLECTION_NAMESPACE = 'test_migrate_ns'
 PLUGIN_EXCEPTION_PATHS = {'modules': 'lib/ansible/modules', 'module_utils': 'lib/ansible/module_utils', 'inventory_scripts': 'contrib/inventory', 'vault': 'contrib/vault', 'unit': 'test/unit', 'integration': 'test/integration/targets'}
-PLUGIN_DEST_EXCEPTION_PATHS = {'inventory_scripts': 'scripts/inventory', 'vault': 'scripts/vault', 'unit': 'test/unit', 'integration': 'test/integration/targets'}
+PLUGIN_DEST_EXCEPTION_PATHS = {'inventory_scripts': 'scripts/inventory', 'vault': 'scripts/vault', 'unit': 'tests/unit', 'integration': 'tests/integration/targets'}
 
 COLLECTION_SKIP_REWRITE = ('_core',)
 
