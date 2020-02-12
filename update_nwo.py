@@ -500,9 +500,17 @@ class UpdateNWO:
                 namespaces[ckey[0]] = {}
             namespaces[ckey[0]][ckey[1]] = copy.deepcopy(collection)
 
+        # validate there are no dupes!
+        logger.error('check for dupes!')
+
         # write each namespace as a separate file
         for namespace,collections in namespaces.items():
-            fn = os.path.join(self.scenario_output_dir, namespace + '.yml')
+
+            if inplace:
+                fn = os.path.join('scenarios', self.SCENARIO, namespace + '.yml')
+            else:
+                fn = os.path.join(self.scenario_output_dir, namespace + '.yml')
+
             with open(fn, 'w') as f:
 
                 if not writeall and namespace != 'community':
@@ -520,11 +528,13 @@ class UpdateNWO:
                     # check for diff ...
                     cdiff = collection_diff(self.scenario_cache[namespace], this_data)
                     if not cdiff:
+                        # if there's no diff and we're making a new dir, we still need to write it out
                         if not inplace:
                             logger.info('duplicate %s' % fn)
-                        ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
+                            ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
                         continue
 
+                    logger.info('%s has changes ...' % namespace)
                     pprint(cdiff)
 
                     logger.info('rewrite %s' % fn)
@@ -555,8 +565,6 @@ class UpdateNWO:
                     ruamel.yaml.dump(nd, f, Dumper=ruamel.yaml.RoundTripDumper)
 
 
-        # validate there are no dupes!
-
         if inplace:
             a = sorted(glob.glob('scenarios/%s/*' % self.SCENARIO))
             b = sorted(glob.glob('%s/*' % self.scenario_output_dir))
@@ -573,8 +581,8 @@ class UpdateNWO:
                     logger.info('copy %s to %s' % (bfile, afile))
                     os.remove(afile)
                     shutil.copyfile(bfile, afile)
-                else:
-                    logger.info('no changes for %s' % afile)
+                #else:
+                #    logger.info('no changes for %s' % afile)
 
 
 if __name__ == "__main__":
