@@ -513,56 +513,59 @@ class UpdateNWO:
 
             with open(fn, 'w') as f:
 
+                '''
                 if not writeall and namespace != 'community':
-                    if not inplce:
+                    if not inplace:
                         logger.info('duplicate %s' % fn)
                     ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
                 else:
-                    #logger.info('rewrite %s' % fn)
-                    if namespace == 'community':
-                        this_data = copy.deepcopy(self.scenario_cache['community'])
-                        this_data['general'] = collections['general']
-                    else:
-                        this_data = collections
+                '''
 
-                    # check for diff ...
-                    cdiff = collection_diff(self.scenario_cache[namespace], this_data)
-                    if not cdiff:
-                        # if there's no diff and we're making a new dir, we still need to write it out
-                        if not inplace:
-                            logger.info('duplicate %s' % fn)
-                            ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
-                        continue
+                #logger.info('rewrite %s' % fn)
+                if namespace == 'community':
+                    this_data = copy.deepcopy(self.scenario_cache['community'])
+                    this_data['general'] = collections['general']
+                else:
+                    this_data = collections
 
-                    logger.info('%s has changes ...' % namespace)
-                    pprint(cdiff)
+                # check for diff ...
+                cdiff = collection_diff(self.scenario_cache[namespace], this_data)
+                if not cdiff:
+                    # if there's no diff and we're making a new dir, we still need to write it out
+                    if not inplace:
+                        logger.info('duplicate %s' % fn)
+                        ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
+                    continue
 
-                    logger.info('rewrite %s' % fn)
+                logger.info('%s has changes ...' % namespace)
+                pprint(cdiff)
 
-                    # sort all keys
-                    nd = {}
-                    names = sorted(list(this_data.keys()))
-                    for name in names:
-                        nd[name] = {}
+                logger.info('rewrite %s' % fn)
 
-                        ptypes = sorted(list(this_data[name].keys()))
-                        ptypes += sorted(list(self.scenario_cache[namespace][name].keys()))
-                        ptypes = sorted(set(ptypes))
-                        ptypes = [x for x in ptypes if x != 'plugins']
+                # sort all keys
+                nd = {}
+                names = sorted(list(this_data.keys()))
+                for name in names:
+                    nd[name] = {}
 
-                        for ptype in ptypes:
-                            #if ptype == 'plugins':
-                            #    import epdb; epdb.st()
-                            if ptype in this_data[name]:
-                                nd[name][ptype] = sorted(this_data[name][ptype])
-                            if ptype in self.scenario_cache[namespace][name]:
-                                if ptype not in nd[name]:
-                                    nd[name][ptype] = []
-                                if namespace != 'community' and name != 'general':
-                                    nd[name][ptype] += self.scenario_cache[namespace][name][ptype]
-                                nd[name][ptype] = sorted(set(nd[name][ptype]))
+                    ptypes = sorted(list(this_data[name].keys()))
+                    ptypes += sorted(list(self.scenario_cache[namespace][name].keys()))
+                    ptypes = sorted(set(ptypes))
+                    ptypes = [x for x in ptypes if x != 'plugins']
 
-                    ruamel.yaml.dump(nd, f, Dumper=ruamel.yaml.RoundTripDumper)
+                    for ptype in ptypes:
+                        #if ptype == 'plugins':
+                        #    import epdb; epdb.st()
+                        if ptype in this_data[name]:
+                            nd[name][ptype] = sorted(this_data[name][ptype])
+                        if ptype in self.scenario_cache[namespace][name]:
+                            if ptype not in nd[name]:
+                                nd[name][ptype] = []
+                            if namespace != 'community' and name != 'general':
+                                nd[name][ptype] += self.scenario_cache[namespace][name][ptype]
+                            nd[name][ptype] = sorted(set(nd[name][ptype]))
+
+                ruamel.yaml.dump(nd, f, Dumper=ruamel.yaml.RoundTripDumper)
 
 
         if inplace:
