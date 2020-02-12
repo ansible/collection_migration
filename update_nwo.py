@@ -506,10 +506,11 @@ class UpdateNWO:
             with open(fn, 'w') as f:
 
                 if not writeall and namespace != 'community':
-                    logger.info('duplicate %s' % fn)
+                    if not inplce:
+                        logger.info('duplicate %s' % fn)
                     ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
                 else:
-                    logger.info('rewrite %s' % fn)
+                    #logger.info('rewrite %s' % fn)
                     if namespace == 'community':
                         this_data = copy.deepcopy(self.scenario_cache['community'])
                         this_data['general'] = collections['general']
@@ -519,7 +520,8 @@ class UpdateNWO:
                     # check for diff ...
                     cdiff = collection_diff(self.scenario_cache[namespace], this_data)
                     if not cdiff:
-                        logger.info('duplicate %s' % fn)
+                        if not inplace:
+                            logger.info('duplicate %s' % fn)
                         ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
                         continue
 
