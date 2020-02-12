@@ -511,6 +511,9 @@ class UpdateNWO:
             else:
                 fn = os.path.join(self.scenario_output_dir, namespace + '.yml')
 
+            if not inplace and namespace != 'community':
+                continue
+
             with open(fn, 'w') as f:
 
                 '''
