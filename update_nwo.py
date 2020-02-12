@@ -448,21 +448,17 @@ class UpdateNWO:
         # write each namespace as a separate file
         for namespace,collections in namespaces.items():
             fn = os.path.join(self.scenario_output_dir, namespace + '.yml')
+            logger.info('write %s' % fn)
             with open(fn, 'w') as f:
 
                 if not writeall and namespace != 'community':
-                    logger.info('copy %s' % fn)
                     ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
                 else:
-                    logger.info('rewrite %s' % fn)
                     if namespace == 'community':
                         this_data = copy.deepcopy(self.scenario_cache['community'])
                         this_data['general'] = collections['general']
                     else:
                         this_data = collections
-
-                    #if namespace == 'community':
-                    #    import epdb; epdb.st()
 
                     # sort all keys
                     nd = {}
@@ -483,8 +479,7 @@ class UpdateNWO:
                             if ptype in self.scenario_cache[namespace][name]:
                                 if ptype not in nd[name]:
                                     nd[name][ptype] = []
-                                if namespace != 'community' and name != 'general':
-                                    nd[name][ptype] += self.scenario_cache[namespace][name][ptype]
+                                nd[name][ptype] += self.scenario_cache[namespace][name][ptype]
                                 nd[name][ptype] = sorted(set(nd[name][ptype]))
 
                     #if namespace == 'cisco':
