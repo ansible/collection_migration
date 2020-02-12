@@ -40,6 +40,8 @@ from pprint import pprint
 from ansibullbot.utils.component_tools import AnsibleComponentMatcher
 from ansibullbot.utils.git_tools import GitRepoWrapper
 
+from migrate import resolve_spec
+
 
 def get_sha(filename):
     res = sha1sum(filename)
@@ -501,7 +503,7 @@ class UpdateNWO:
             namespaces[ckey[0]][ckey[1]] = copy.deepcopy(collection)
 
         # validate there are no dupes!
-        logger.error('check for dupes!')
+        resolve_spec(namespaces, self.checkout_dir)
 
         # write each namespace as a separate file
         for namespace,collections in namespaces.items():
