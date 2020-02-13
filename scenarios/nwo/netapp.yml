@@ -35,6 +35,8 @@ elementsw:
   - storage/netapp/na_elementsw_volume_clone.py
   - storage/netapp/na_elementsw_volume_pair.py
 ontap:
+  doc_fragments:
+  - netapp.py
   modules:
   - storage/netapp/na_ontap_aggregate.py
   - storage/netapp/na_ontap_autosupport.py
