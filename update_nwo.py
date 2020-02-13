@@ -468,7 +468,7 @@ class UpdateNWO:
         return relpath
 
     def check_spec_for_dupes(self, spec):
-        seen = set()
+        seen = {}
         for ns,col in spec.items():
             for cn,plugins in col.items():
                 for pt,pfs in plugins.items():
@@ -482,15 +482,16 @@ class UpdateNWO:
                             else:
                                 gpattern = os.path.join(self.checkout_dir, 'lib', 'ansible', 'plugins', pt, pf)
                                 filenames = glob.glob(gpattern)
-                                filenames = [x.replace(os.path.join(self.checkout_dir, 'lib', 'ansible', pt)+'/', '') for x in filenames]
+                                filenames = [x.replace(os.path.join(self.checkout_dir, 'lib', 'ansible', 'plugins', pt)+'/', '') for x in filenames]
                         else:
-                            filenames = [os.path.join(pt, pf)]
+                            filenames = [pf]
                             #import epdb; epdb.st()
 
                         for thisf in filenames:
+                            thisf = os.path.join(pt, thisf)
                             if thisf in seen:
-                                raise Exception('%s is duplicated in %s.%s' % (thisf, ns, cn))
-                            seen.add(thisf)
+                                raise Exception('%s\'s %s %s is duplicated in %s.%s' % (seen[thisf], pt, thisf, ns, cn))
+                            seen[thisf] = '%s.%s' % (ns, cn)
         #import epdb; epdb.st()
 
     def make_spec(self, writeall=False, inplace=False):
