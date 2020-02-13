@@ -33,18 +33,11 @@ import ruamel.yaml
 import git as pygit
 from sh import git
 from sh import find
-from sh import sha1sum
 
 from pprint import pprint
 
 from ansibullbot.utils.component_tools import AnsibleComponentMatcher
 from ansibullbot.utils.git_tools import GitRepoWrapper
-
-
-
-def get_sha(filename):
-    res = sha1sum(filename)
-    return res.stdout.split()[0]
 
 
 def collection_diff(a, b):
