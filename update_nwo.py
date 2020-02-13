@@ -117,7 +117,17 @@ class UpdateNWO:
 
         self.rules = []
 
-    def run(self, usecache=False, galaxy_indexer=None, base_scenario_file=None, writeall=False, use_botmeta=True, inplace=False, writecsv=True):
+    def run(
+        self,
+        usecache=False,
+        galaxy_indexer=None,
+        base_scenario_file=None,
+        writeall=False,
+        use_botmeta=True,
+        inplace=False,
+        writecsv=True,
+        inventory_scripts=False
+    ):
 
         if os.path.exists(self.scenario_output_dir):
             shutil.rmtree(self.scenario_output_dir)
@@ -138,7 +148,7 @@ class UpdateNWO:
             email_cache={}
         )
 
-        self.get_plugins()
+        self.get_plugins(inventory_scripts=inventory_scripts)
         self.map_existing_files_to_rules()
         if use_botmeta:
             self.map_botmeta_migrations_to_rules()
@@ -303,7 +313,7 @@ class UpdateNWO:
             }
         )
 
-    def get_plugins(self):
+    def get_plugins(self, inventory_scripts=False):
 
         ''' Find all plugins in the cached checkout and make a list '''
 
@@ -341,19 +351,18 @@ class UpdateNWO:
                 fp = os.path.join(dirName, fn)
                 self.pluginfiles.append([ptype, fn, None, fp])
 
-        '''
         # let's get rid of contrib too
-        logger.info('looking at contrib scripts')
-        root = os.path.join(self.checkout_dir, 'contrib', 'inventory')
-        for dirName, subdirList, fileList in os.walk(root):
-            ptype = 'scripts'
-            for fn in fileList:
-                fp = os.path.join(dirName, fn)
-                bn = os.path.basename(fn).replace('.py', '').replace('.ini', '')
-                #topic = self._guess_topic(fp)
-                topic = None
-                self.pluginfiles.append([ptype, fn, topic, fp])
-        '''
+        if inventory_scripts:
+            logger.info('looking at contrib scripts')
+            root = os.path.join(self.checkout_dir, 'contrib', 'inventory')
+            for dirName, subdirList, fileList in os.walk(root):
+                ptype = 'inventory_scripts'
+                for fn in fileList:
+                    fp = os.path.join(dirName, fn)
+                    bn = os.path.basename(fn).replace('.py', '').replace('.ini', '')
+                    #topic = self._guess_topic(fp)
+                    topic = None
+                    self.pluginfiles.append([ptype, fn, topic, fp])
 
 
     def map_plugins_to_collections(self):
@@ -380,7 +389,9 @@ class UpdateNWO:
         logger.info('matching %s files' % len(self.pluginfiles))
         for idp,plugin in enumerate(self.pluginfiles):
             filepath = plugin[3].replace(self.checkout_dir + '/', '')
-            if '/plugins/' in plugin[3]:
+            if 'contrib/inventory' in plugin[3]:
+                relpath = plugin[3].replace(self.checkout_dir + '/', '')
+            elif '/plugins/' in plugin[3]:
                 relpath = plugin[3].replace(self.checkout_dir + '/lib/ansible/plugins/%s/' % plugin[0], '')
             else:
                 relpath = plugin[3].replace(self.checkout_dir + '/lib/ansible/%s/' % plugin[0], '')
@@ -461,8 +472,11 @@ class UpdateNWO:
         ''' create relative path for a plugin, minus the plugin dir '''
         # .cache/checkouts/ansible/lib/ansible/module_utils/foo/bar/acme.py
         # foo/bar/acme.py
-        pindex = filename.index('/'+plugintype)
-        relpath = filename[pindex+len(plugintype)+2:]
+        if plugintype == 'inventory_scripts':
+            relpath = filename.replace(os.path.join(self.checkout_dir, 'contrib', 'inventory') + '/', '')
+        else:
+            pindex = filename.index('/'+plugintype)
+            relpath = filename[pindex+len(plugintype)+2:]
         return relpath
 
     def check_spec_for_dupes(self, spec):
@@ -593,6 +607,7 @@ class UpdateNWO:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--usecache', action='store_true')
+    parser.add_argument('--invscripts', action='store_true', help='process inventory scripts also')
     parser.add_argument('--inplace', action='store_true')
     parser.add_argument('--nocsv', action='store_true')
     parser.add_argument('--nobotmeta', action='store_true', help="ignore botmeta processing")
@@ -600,4 +615,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     nwo = UpdateNWO()
-    nwo.run(usecache=args.usecache, writeall=args.writeall, use_botmeta=not args.nobotmeta, inplace=args.inplace, writecsv=not args.nocsv)
+    nwo.run(
+        usecache=args.usecache,
+        writeall=args.writeall,
+        use_botmeta=not args.nobotmeta,
+        inplace=args.inplace,
+        writecsv=not args.nocsv,
+        inventory_scripts=args.invscripts
+    )
