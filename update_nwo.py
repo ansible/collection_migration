@@ -169,7 +169,7 @@ class UpdateNWO:
             self.scenario_cache[namespace] = copy.deepcopy(ydata)
             for name,plugins in ydata.items():
 
-                if namespace == 'community' and name == 'general':
+                if namespace == self.DUMPING_GROUND[0] and name == self.DUMPING_GROUND[1]:
                     continue
 
                 for ptype,pfiles in plugins.items():
@@ -456,7 +456,7 @@ class UpdateNWO:
                     pf[4]['plugin_type'],
                     pf[4]['matcher']
                 ]
-                if ns == 'community' and name == 'general':
+                if ns == self.DUMPING_GROUND[0] and name == self.DUMPING_GROUND[1]:
                     row[7] = 'unclaimed!'
                 spamwriter.writerow(row)
 
@@ -497,6 +497,8 @@ class UpdateNWO:
 
     def make_spec(self, writeall=False, inplace=False):
 
+        ''' Aseemble namespaces and collections for the files and write to disk as yaml '''
+
         # make specfile ready dicts for each collection
         for idx,x in enumerate(self.pluginfiles):
             ns = x[-1]['namespace']
@@ -535,19 +537,20 @@ class UpdateNWO:
         # write each namespace as a separate file
         for namespace,collections in namespaces.items():
 
+            # overwrite existing file if inplace
             if inplace:
                 fn = os.path.join('scenarios', self.SCENARIO, namespace + '.yml')
             else:
                 fn = os.path.join(self.scenario_output_dir, namespace + '.yml')
 
             # community is the only one we really need to write since it's a catchall
-            if not writeall and inplace and namespace != 'community':
+            if not writeall and inplace and namespace != self.DUMPING_GROUND[0]:
                 continue
 
             #logger.info('rewrite %s' % fn)
-            if namespace == 'community':
-                this_data = copy.deepcopy(self.scenario_cache['community'])
-                this_data['general'] = collections['general']
+            if namespace == self.DUMPING_GROUND[0]:
+                this_data = copy.deepcopy(self.scenario_cache[self.DUMPING_GROUND[0]])
+                this_data[self.DUMPING_GROUND[1]] = collections[self.DUMPING_GROUND[1]]
             else:
                 this_data = collections
 
@@ -581,7 +584,7 @@ class UpdateNWO:
                         if ptype not in nd[name]:
                             nd[name][ptype] = []
                         # readd the old entries ... ?
-                        if namespace != 'community' and name != 'general':
+                        if namespace != self.DUMPING_GROUND[0] and name != self.DUMPING_GROUND[1]:
                             nd[name][ptype] += self.scenario_cache[namespace][name][ptype]
                         nd[name][ptype] = sorted(set(nd[name][ptype]))
 
