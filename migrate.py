@@ -868,12 +868,6 @@ def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, arg
 
 def rewrite_py(src, dest, collection, spec, namespace, args, plugin_type=None):
 
-    #(Epdb) C.CONFIGURABLE_PLUGINS
-    #('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell')
-    #if 'contrib' in src:
-    #    import epdb; epdb.st()
-
-    docs_deps = []
     with fst_rewrite_session(src, dest) as mod_fst:
         import_deps = rewrite_imports(mod_fst, collection, spec, namespace, args)
 
