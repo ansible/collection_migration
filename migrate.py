@@ -5,6 +5,7 @@
 import argparse
 import configparser
 import contextlib
+import copy
 import functools
 import glob
 import importlib.util
@@ -133,6 +134,50 @@ manual_check = defaultdict(list)
 
 
 class UnmovablePathStr(str): ...
+
+
+class CollectionDependencyMap:
+
+    NEWDEP = {
+        'import': set(),
+        'doc': set(),
+        'unit': set(),
+        'integration': set(),
+    }
+
+    def __init__(self):
+        self.deps = {}
+
+    def add_import_dep(self, dep, plugin):
+        if dep not in self.deps:
+            self.deps[dep] = copy.deepcopy(self.NEWDEP)
+        self.deps[dep]['import'].add(plugin)
+
+    def add_doc_dep(self, dep, plugin):
+        if dep not in self.deps:
+            self.deps[dep] = copy.deepcopy(self.NEWDEP)
+        self.deps[dep]['doc'].add(plugin)
+
+    def add_unit_dep(self, dep, plugin):
+        if dep not in self.deps:
+            self.deps[dep] = copy.deepcopy(self.NEWDEP)
+        self.deps[dep]['unit'].add(plugin)
+
+    def add_integration_dep(self, dep, plugin):
+        if plugin is None:
+            plugin = '!unknown'
+        if dep not in self.deps:
+            self.deps[dep] = copy.deepcopy(self.NEWDEP)
+        self.deps[dep]['integration'].add(plugin)
+
+    def to_safe_dict(self):
+        rdeps = {}
+        for fn,ddeps in self.deps.items():
+            rdeps[fn] = {}
+            for dtype,deps in ddeps.items():
+                if deps:
+                    rdeps[fn][dtype] = sorted(list(deps))
+        return rdeps
 
 
 ### FUNCTION DEFS
@@ -1278,6 +1323,9 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
             # create the data for galaxy.yml
             galaxy_metadata = init_galaxy_metadata(collection, namespace, target_github_org)
 
+            # create depmap for reference
+            cdm = CollectionDependencyMap()
+
             # process each plugin type
             for plugin_type, plugins in spec[namespace][collection].items():
                 if not plugins:
@@ -1359,6 +1407,11 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                     import_deps += deps[0]
                     docs_deps += deps[1]
 
+                    for x in import_deps:
+                        cdm.add_import_dep('.'.join(x), relative_dest_plugin_path)
+                    for x in docs_deps:
+                        cdm.add_doc_dep('.'.join(x), relative_dest_plugin_path)
+
                     if args.skip_tests or plugin_type in NOT_PLUGINS:
                         # skip rest for 'not really plugins'
                         continue
@@ -1380,6 +1433,8 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                 )
 
                 unit_deps += rewrite_unit_tests(collection_dir, collection, spec, namespace, args)
+                for udep in unit_deps:
+                    cdm.add_unit_dep(udep, relative_dest_plugin_path)
 
                 inject_gitignore_into_tests(collection_dir)
 
@@ -1396,6 +1451,9 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                     logger.error(e)
 
                 global integration_tests_deps
+                if integration_tests_deps:
+                    for x in list(integration_tests_deps):
+                        cdm.add_integration_dep('.'.join(x), None)
                 add_deps_to_metadata(integration_tests_deps.union(import_deps + docs_deps + unit_deps), galaxy_metadata)
                 integration_tests_deps = set()
 
@@ -1418,6 +1476,12 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
             write_yaml_into_file_as_is(
                 os.path.join(collection_dir, 'galaxy.yml'),
                 galaxy_metadata,
+            )
+
+            # write dependency metadata
+            write_yaml_into_file_as_is(
+                os.path.join(collection_dir, 'requirements.yml'),
+                cdm.to_safe_dict()
             )
 
             # init git repo
