@@ -401,7 +401,11 @@ class UpdateNWO:
         
         ''' Make the human readable aggregated spreadsheet '''
 
-        fn = os.path.join(self.scenario_output_dir, 'compiled.csv')        
+        if inplace:
+            fn = os.path.join('scenarios', self.SCENARIO, 'compiled.csv')
+        else:
+            fn = os.path.join(self.scenario_output_dir, 'compiled.csv')
+
         logger.info('compiling %s' % fn)
         with open(fn, 'w') as csvfile:
             spamwriter = csv.writer(csvfile)
