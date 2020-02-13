@@ -1333,7 +1333,7 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                         # TODO: handle powershell import rewrites
                         shutil.copyfile(src, dest)
                         continue
-                    elif plugin_type in ('modules',) and src.endswith('__init__.py'):
+                    elif plugin_type == 'modules' and os.path.basename(src) == '__init__.py':
                         # __init__.py in lib/ansible/modules are empty so just copy them over
                         # this saves us from doing all the processing on them and
                         # also from giving false positives in unit tests discovery
