@@ -461,6 +461,7 @@ class UpdateNWO:
                 spamwriter.writerow(row)
 
     def _make_relpath(self, filename, plugintype):
+        ''' create relative path for a plugin, minus the plugin dir '''
         # .cache/checkouts/ansible/lib/ansible/module_utils/foo/bar/acme.py
         # foo/bar/acme.py
         pindex = filename.index('/'+plugintype)
@@ -468,12 +469,14 @@ class UpdateNWO:
         return relpath
 
     def check_spec_for_dupes(self, spec):
+        ''' Duplicated files across collections is an instant fail for migrate.py '''
         seen = {}
         for ns,col in spec.items():
             for cn,plugins in col.items():
                 for pt,pfs in plugins.items():
                     for pf in pfs:
 
+                        # use real globbing to list files ...
                         if '*' in pf:
                             if pt.startswith('module'):
                                 gpattern = os.path.join(self.checkout_dir, 'lib', 'ansible', pt, pf)
@@ -485,14 +488,12 @@ class UpdateNWO:
                                 filenames = [x.replace(os.path.join(self.checkout_dir, 'lib', 'ansible', 'plugins', pt)+'/', '') for x in filenames]
                         else:
                             filenames = [pf]
-                            #import epdb; epdb.st()
 
                         for thisf in filenames:
                             thisf = os.path.join(pt, thisf)
                             if thisf in seen:
                                 raise Exception('%s\'s %s %s is duplicated in %s.%s' % (seen[thisf], pt, thisf, ns, cn))
                             seen[thisf] = '%s.%s' % (ns, cn)
-        #import epdb; epdb.st()
 
     def make_spec(self, writeall=False, inplace=False):
 
@@ -539,18 +540,9 @@ class UpdateNWO:
             else:
                 fn = os.path.join(self.scenario_output_dir, namespace + '.yml')
 
+            # community is the only one we really need to write since it's a catchall
             if not writeall and inplace and namespace != 'community':
                 continue
-
-            #with open(fn, 'w') as f:
-
-            '''
-            if not writeall and namespace != 'community':
-                if not inplace:
-                    logger.info('duplicate %s' % fn)
-                ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
-            else:
-            '''
 
             #logger.info('rewrite %s' % fn)
             if namespace == 'community':
@@ -568,13 +560,10 @@ class UpdateNWO:
                     with open(fn, 'w') as f:
                         ruamel.yaml.dump(self.scenario_cache[namespace], f, Dumper=ruamel.yaml.RoundTripDumper)
                 continue
-
             logger.info('%s has changes ...' % namespace)
             pprint(cdiff)
 
-            logger.info('rewrite %s' % fn)
-
-            # sort all keys
+            # sort all keys and make a clean yaml structure
             nd = {}
             names = sorted(list(this_data.keys()))
             for name in names:
@@ -586,41 +575,19 @@ class UpdateNWO:
                 ptypes = [x for x in ptypes if x != 'plugins']
 
                 for ptype in ptypes:
-                    #if ptype == 'plugins':
-                    #    import epdb; epdb.st()
                     if ptype in this_data[name]:
                         nd[name][ptype] = sorted(this_data[name][ptype])
                     if ptype in self.scenario_cache[namespace][name]:
                         if ptype not in nd[name]:
                             nd[name][ptype] = []
+                        # readd the old entries ... ?
                         if namespace != 'community' and name != 'general':
                             nd[name][ptype] += self.scenario_cache[namespace][name][ptype]
                         nd[name][ptype] = sorted(set(nd[name][ptype]))
 
+            logger.info('rewrite %s' % fn)
             with open(fn, 'w') as f:
                 ruamel.yaml.dump(nd, f, Dumper=ruamel.yaml.RoundTripDumper)
-
-
-        '''
-        if inplace:
-            a = sorted(glob.glob('scenarios/%s/*' % self.SCENARIO))
-            b = sorted(glob.glob('%s/*' % self.scenario_output_dir))
-
-            found = []
-            for bfile in b:
-                bfile_sha = get_sha(bfile)
-                bbasen = os.path.basename(bfile)
-                afile = os.path.join('scenarios', self.SCENARIO, bbasen)
-                abasen = os.path.basename(afile)
-                afile_sha = get_sha(afile)
-
-                if afile_sha != bfile_sha:
-                    logger.info('copy %s to %s' % (bfile, afile))
-                    os.remove(afile)
-                    shutil.copyfile(bfile, afile)
-                #else:
-                #    logger.info('no changes for %s' % afile)
-        '''
 
 
 if __name__ == "__main__":
