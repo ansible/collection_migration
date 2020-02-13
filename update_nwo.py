@@ -193,6 +193,8 @@ class UpdateNWO:
 
         rules_added = 0
         for pf in self.pluginfiles:
+            if '/lib/' not in pf[3]:
+                continue
             libix = pf[3].index('/lib/')
             libpath = pf[3][libix+1:]
             meta = self.component_matcher.get_meta_for_file(libpath)
