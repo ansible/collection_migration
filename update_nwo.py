@@ -40,7 +40,6 @@ from pprint import pprint
 from ansibullbot.utils.component_tools import AnsibleComponentMatcher
 from ansibullbot.utils.git_tools import GitRepoWrapper
 
-from migrate import resolve_spec
 
 
 def get_sha(filename):
@@ -468,6 +467,32 @@ class UpdateNWO:
         relpath = filename[pindex+len(plugintype)+2:]
         return relpath
 
+    def check_spec_for_dupes(self, spec):
+        seen = set()
+        for ns,col in spec.items():
+            for cn,plugins in col.items():
+                for pt,pfs in plugins.items():
+                    for pf in pfs:
+
+                        if '*' in pf:
+                            if pt.startswith('module'):
+                                gpattern = os.path.join(self.checkout_dir, 'lib', 'ansible', pt, pf)
+                                filenames = glob.glob(gpattern)
+                                filenames = [x.replace(os.path.join(self.checkout_dir, 'lib', 'ansible', pt)+'/', '') for x in filenames]
+                            else:
+                                gpattern = os.path.join(self.checkout_dir, 'lib', 'ansible', 'plugins', pt, pf)
+                                filenames = glob.glob(gpattern)
+                                filenames = [x.replace(os.path.join(self.checkout_dir, 'lib', 'ansible', pt)+'/', '') for x in filenames]
+                        else:
+                            filenames = [os.path.join(pt, pf)]
+                            #import epdb; epdb.st()
+
+                        for thisf in filenames:
+                            if thisf in seen:
+                                raise Exception('%s is duplicated in %s.%s' % (thisf, ns, cn))
+                            seen.add(thisf)
+        #import epdb; epdb.st()
+
     def make_spec(self, writeall=False, inplace=False):
 
         # make specfile ready dicts for each collection
@@ -503,7 +528,7 @@ class UpdateNWO:
             namespaces[ckey[0]][ckey[1]] = copy.deepcopy(collection)
 
         # validate there are no dupes!
-        resolve_spec(namespaces, self.checkout_dir)
+        self.check_spec_for_dupes(namespaces)
 
         # write each namespace as a separate file
         for namespace,collections in namespaces.items():
