@@ -1355,9 +1355,10 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
 
                     logger.info('Processing %s -> %s', src, dest)
 
-                    deps = rewrite_py(src, dest, collection, spec, namespace, args)
-                    import_deps += deps[0]
-                    docs_deps += deps[1]
+                    if 'contrib/inventory' not in src:
+                        deps = rewrite_py(src, dest, collection, spec, namespace, args)
+                        import_deps += deps[0]
+                        docs_deps += deps[1]
 
                     if args.skip_tests or plugin_type in NOT_PLUGINS:
                         # skip rest for 'not really plugins'
