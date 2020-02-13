@@ -1344,7 +1344,7 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                         # skip rest for 'not really plugins'
                         continue
 
-                    integration_test_dirs.extend(integration_tests_discovery(checkout_path, plugin_type, plugin))
+                    integration_test_dirs.extend(discover_integration_tests(checkout_path, plugin_type, plugin))
 
                     # process unit tests
                     plugin_unit_tests_copy_map = create_unit_tests_copy_map(
@@ -1659,7 +1659,7 @@ def integration_tests_add_to_deps(collection, dep_collection):
     integration_tests_deps.add(dep_collection)
 
 
-def integration_tests_discovery(checkout_dir, plugin_type, plugin_name):
+def discover_integration_tests(checkout_dir, plugin_type, plugin_name):
     targets_dir = os.path.join(checkout_dir, 'test/integration/targets')
     # 'cloud/amazon/ec2_eip.py' -> 'ec2_eip'
     plugin_name_base = os.path.basename(os.path.splitext(plugin_name)[0])
@@ -1684,14 +1684,9 @@ def integration_tests_discovery(checkout_dir, plugin_type, plugin_name):
 
     return files + deps
 
-processed_aliases = None
 
+@functools.lru_cache()
 def get_processed_aliases(checkout_dir):
-    global processed_aliases
-
-    if processed_aliases:
-        return processed_aliases
-
     ignored_alias_patterns = frozenset({
         ':',
         '#',
@@ -1716,9 +1711,8 @@ def get_processed_aliases(checkout_dir):
             if not line or any(ignored_alias in line for ignored_alias in ignored_alias_patterns):
                 continue
             res[line].add(target_dir)
-    processed_aliases = res
 
-    return processed_aliases
+    return res
 
 
 def process_needs_target(checkout_dir, fname):
