@@ -877,6 +877,8 @@ def rewrite_py(src, dest, collection, spec, namespace, args, plugin_type=None):
             except LookupError as err:
                 docs_deps = []
                 logger.debug('%s in %s', err, src)
+        else:
+            docs_deps = []
 
         rewrite_class_property(mod_fst, collection, namespace, dest)
 
