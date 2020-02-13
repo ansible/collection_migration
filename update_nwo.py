@@ -542,7 +542,7 @@ class UpdateNWO:
             if not writeall and inplace and namespace != 'community':
                 continue
 
-            with open(fn, 'w') as f:
+            #with open(fn, 'w') as f:
 
             '''
             if not writeall and namespace != 'community':
