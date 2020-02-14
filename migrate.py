@@ -63,6 +63,7 @@ COLLECTION_NAMESPACE = 'test_migrate_ns'
 PLUGIN_EXCEPTION_PATHS = {'modules': 'lib/ansible/modules', 'module_utils': 'lib/ansible/module_utils', 'inventory_scripts': 'contrib/inventory', 'vault': 'contrib/vault', 'unit': 'test/unit', 'integration': 'test/integration/targets'}
 PLUGIN_DEST_EXCEPTION_PATHS = {'inventory_scripts': 'scripts/inventory', 'vault': 'scripts/vault', 'unit': 'tests/unit', 'integration': 'tests/integration/targets'}
 
+COLLECTION_OPTIONS_KEY = '_options'
 COLLECTION_SKIP_REWRITE = ('_core',)
 
 RAW_STR_TMPL = "r'''{str_val}'''"
@@ -458,6 +459,8 @@ def resolve_spec(spec, checkoutdir):
     for ns in spec.keys():
         for coll in spec[ns].keys():
             for ptype in spec[ns][coll].keys():
+                if ptype == COLLECTION_OPTIONS_KEY:
+                    continue
                 if ptype not in VALID_SPEC_ENTRIES:
                     raise Exception('Invalid plugin type: %s, expected one of %s' % (ptype, VALID_SPEC_ENTRIES))
                 plugin_base = os.path.join(checkoutdir, PLUGIN_EXCEPTION_PATHS.get(ptype, os.path.join('lib', 'ansible', 'plugins', ptype)))
@@ -1329,6 +1332,9 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
     for namespace in spec.keys():
         for collection in spec[namespace].keys():
 
+            # collection specific options
+            options = spec[namespace][collection].get(COLLECTION_OPTIONS_KEY, {})
+
             if args.limits:
                 matched = False
                 for limit in args.limits:
@@ -1370,6 +1376,9 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
 
             # process each plugin type
             for plugin_type, plugins in spec[namespace][collection].items():
+                if plugin_type == COLLECTION_OPTIONS_KEY:
+                    continue
+
                 if not plugins:
                     logger.error('Empty plugin_type: %s in spec for %s.%s', plugin_type, namespace, collection)
                     continue
@@ -1396,7 +1405,7 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                     relative_src_plugin_path = os.path.join(src_plugin_base, plugin)
                     src = os.path.join(checkout_path, relative_src_plugin_path)
 
-                    do_preserve_subdirs = ((args.preserve_module_subdirs and plugin_type == 'modules') or plugin_type in ALWAYS_PRESERVE_SUBDIRS)
+                    do_preserve_subdirs = ((args.preserve_module_subdirs and plugin_type == 'modules') or plugin_type in ALWAYS_PRESERVE_SUBDIRS or options.get('preserve_module_subdirs'))
                     plugin_path_chunk = plugin if do_preserve_subdirs else os.path.basename(plugin)
 
                     # use pname as 'pinal name' so we can handle deprecated content
