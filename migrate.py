@@ -138,6 +138,8 @@ class UnmovablePathStr(str): ...
 
 class CollectionDependencyMap:
 
+    ''' A tool to collect dependencies for a collection '''
+
     NEWDEP = {
         'import': set(),
         'doc': set(),
@@ -147,6 +149,10 @@ class CollectionDependencyMap:
 
     def __init__(self):
         self.deps = {}
+        self.active_file = None
+
+    def set_active_file(self, filename):
+        self.active_file = filename
 
     def add_import_dep(self, dep, plugin):
         if dep not in self.deps:
@@ -164,8 +170,17 @@ class CollectionDependencyMap:
         self.deps[dep]['unit'].add(plugin)
 
     def add_integration_dep(self, dep, plugin):
+        if plugin is None and self.active_file:
+            plugin = self.active_file
         if plugin is None:
             plugin = '!unknown'
+            return
+        elif '/tests/' in plugin:
+            # drop the absolute path
+            print(plugin)
+            tindex = plugin.index('/tests/')
+            plugin = plugin[tindex+1:]
+            #import epdb; epdb.st()
         if dep not in self.deps:
             self.deps[dep] = copy.deepcopy(self.NEWDEP)
         self.deps[dep]['integration'].add(plugin)
@@ -518,7 +533,7 @@ def get_rewritable_collections(namespace, spec):
 
 ### REWRITE FUNCTIONS
 
-def rewrite_class_property(mod_fst, collection, namespace, filename):
+def rewrite_class_property(mod_fst, collection, namespace, filename, cdm=None):
     if all(f'plugins/{p}' not in filename for p in REWRITE_CLASS_PROPERTY_PLUGINS):
         return
 
@@ -703,7 +718,7 @@ def rewrite_docs_fragments(docs, collection, spec, namespace, args):
     return deps, new_fragments
 
 
-def rewrite_plugin_documentation(mod_fst, collection, spec, namespace, args):
+def rewrite_plugin_documentation(mod_fst, collection, spec, namespace, args, cdm=None):
     try:
         doc_val = (
             mod_fst.
@@ -770,7 +785,7 @@ def rewrite_plugin_documentation(mod_fst, collection, spec, namespace, args):
     return deps
 
 
-def rewrite_imports(mod_fst, collection, spec, namespace, args):
+def rewrite_imports(mod_fst, collection, spec, namespace, args, cdm=None):
     """Rewrite imports map."""
     plugins_path = ('ansible_collections', namespace, collection, 'plugins')
     tests_path = ('ansible_collections', namespace, collection, 'tests')
@@ -782,7 +797,7 @@ def rewrite_imports(mod_fst, collection, spec, namespace, args):
         ('units', ): unit_tests_path,
     }
 
-    return rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, args)
+    return rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, args, cdm=cdm)
 
 
 def match_import_src(imp_src, import_map):
@@ -805,7 +820,7 @@ def match_import_src(imp_src, import_map):
     raise LookupError(f"Couldn't find a replacement for {imp_src!s}")
 
 
-def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, args):
+def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, args, cdm=None):
     """Replace imports in the python module FST."""
     deps = []
     for imp in mod_fst.find_all(('import', 'from_import')):
@@ -910,17 +925,25 @@ def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, arg
     return deps
 
 
-def rewrite_py(src, dest, collection, spec, namespace, args):
+def rewrite_py(src, dest, collection, spec, namespace, args, cdm=None):
+    if cdm:
+        cdm.set_active_file(dest)
     with fst_rewrite_session(src, dest) as mod_fst:
-        import_deps = rewrite_imports(mod_fst, collection, spec, namespace, args)
+        import_deps = rewrite_imports(mod_fst, collection, spec, namespace, args, cdm=cdm)
 
         try:
-            docs_deps = rewrite_plugin_documentation(mod_fst, collection, spec, namespace, args)
+            docs_deps = rewrite_plugin_documentation(mod_fst, collection, spec, namespace, args, cdm=cdm)
         except LookupError as err:
             docs_deps = []
             logger.debug('%s in %s', err, src)
 
-        rewrite_class_property(mod_fst, collection, namespace, dest)
+        rewrite_class_property(mod_fst, collection, namespace, dest, cdm=cdm)
+
+    if cdm:
+        for imd in import_deps:
+            cdm.add_import_dep('.'.join(imd), dest)
+        for imd in docs_deps:
+            cdm.add_doc_dep('.'.join(imd), dest)
 
     return (import_deps, docs_deps)
 
@@ -1403,14 +1426,14 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
 
                     logger.info('Processing %s -> %s', src, dest)
 
-                    deps = rewrite_py(src, dest, collection, spec, namespace, args)
+                    deps = rewrite_py(src, dest, collection, spec, namespace, args, cdm=cdm)
                     import_deps += deps[0]
                     docs_deps += deps[1]
 
-                    for x in import_deps:
-                        cdm.add_import_dep('.'.join(x), relative_dest_plugin_path)
-                    for x in docs_deps:
-                        cdm.add_doc_dep('.'.join(x), relative_dest_plugin_path)
+                    #for x in import_deps:
+                    #    cdm.add_import_dep('.'.join(x), relative_dest_plugin_path)
+                    #for x in docs_deps:
+                    #    cdm.add_doc_dep('.'.join(x), relative_dest_plugin_path)
 
                     if args.skip_tests or plugin_type in NOT_PLUGINS:
                         # skip rest for 'not really plugins'
@@ -1445,7 +1468,7 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
 
                 # FIXME need to hack PyYAML to preserve formatting (not how much it's possible or how much it is work) or use e.g. ruamel.yaml
                 try:
-                    migrated_integration_test_files = rewrite_integration_tests(integration_test_dirs, checkout_path, collection_dir, namespace, collection, spec, args)
+                    migrated_integration_test_files = rewrite_integration_tests(integration_test_dirs, checkout_path, collection_dir, namespace, collection, spec, args, cdm=cdm)
                     migrated_to_collection.update(migrated_integration_test_files)
                 except yaml.composer.ComposerError as e:
                     logger.error(e)
@@ -1729,6 +1752,10 @@ def mark_moved_resources(checkout_dir, namespace, collection, migrated_to_collec
 integration_tests_deps = set()
 
 def integration_tests_add_to_deps(collection, dep_collection):
+
+    #import epdb; epdb.st()
+    import q; q(collection, dep_collection)
+
     if collection == dep_collection:
         return
 
@@ -1827,7 +1854,7 @@ def process_needs_target(checkout_dir, fname):
     return deps
 
 
-def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace, collection, spec, args):
+def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace, collection, spec, args, cdm=None):
     # FIXME module_defaults groups
     logger.info('Processing integration tests for %s.%s', namespace, collection)
 
@@ -1843,6 +1870,8 @@ def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace
                 if not os.path.exists(dest_dir):
                     os.makedirs(dest_dir)
                 dest = os.path.join(dest_dir, filename)
+                if cdm:
+                    cdm.set_active_file(dest)
 
                 dummy, ext = os.path.splitext(filename)
 
@@ -1851,19 +1880,21 @@ def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace
                 if ext in BAD_EXT:
                     continue
                 elif ext in ('.py',):
-                    import_deps, docs_deps = rewrite_py(src, dest, collection, spec, namespace, args)
+                    import_deps, docs_deps = rewrite_py(src, dest, collection, spec, namespace, args, cdm=cdm)
 
                     for dep_ns, dep_coll in import_deps + docs_deps:
-                        integration_tests_add_to_deps((namespace, collection), (dep_ns, dep_coll))
+                        if cdm:
+                            cdm.add_integration_dep('.'.join([dep_ns, dep_coll]), dest)
+                        integration_tests_add_to_deps((namespace, collection), (dep_ns, dep_coll), cdm=cdm)
                 elif ext in ('.ps1',):
                     # FIXME
                     shutil.copy2(src, dest)
                 elif ext in ('.yml', '.yaml'):
-                    rewrite_yaml(src, dest, namespace, collection, spec, args, checkout_dir)
+                    rewrite_yaml(src, dest, namespace, collection, spec, args, checkout_dir, cdm=cdm)
                 elif ext in ('.sh',):
-                    rewrite_sh(src, dest, namespace, collection, spec, args)
+                    rewrite_sh(src, dest, namespace, collection, spec, args, cdm=cdm)
                 elif filename == 'ansible.cfg':
-                    rewrite_ini(src, dest, namespace, collection, spec, args)
+                    rewrite_ini(src, dest, namespace, collection, spec, args, cdm=cdm)
                 else:
                     shutil.copy2(src, dest)
 
@@ -1877,7 +1908,7 @@ def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace
     return migrated
 
 
-def rewrite_sh(src, dest, namespace, collection, spec, args):
+def rewrite_sh(src, dest, namespace, collection, spec, args, cdm=None):
     sh_key_map = {
         'ANSIBLE_CACHE_PLUGIN': 'cache',
         'ANSIBLE_CALLBACK_WHITELIST': 'callback',
@@ -1908,13 +1939,18 @@ def rewrite_sh(src, dest, namespace, collection, spec, args):
                     logger.debug(msg)
                     contents = contents.replace(key + '=' + plugin_name, key + '=' + new_plugin_name)
                     contents = contents.replace(key + ' ' + plugin_name, key + ' ' + new_plugin_name)
+                    if cdm:
+                        cdm.add_integration_dep(
+                            '.'.join([ns, coll]),
+                            dest + ':' + new_plugin_name
+                        )
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
     write_text_into_file(dest, contents)
     shutil.copystat(src, dest)
 
 
-def rewrite_ini(src, dest, namespace, collection, spec, args):
+def rewrite_ini(src, dest, namespace, collection, spec, args, cdm=None):
     ini_key_map = {
         'defaults': {
             'callback_whitelist': 'callback',
@@ -1932,7 +1968,7 @@ def rewrite_ini(src, dest, namespace, collection, spec, args):
     config.read(src)
     for section in config.sections():
         try:
-            rewrite_ini_section(config, ini_key_map, section, namespace, collection, spec, args)
+            rewrite_ini_section(config, ini_key_map, section, namespace, collection, spec, args, cdm=cdm)
         except KeyError:
             continue
 
@@ -1940,7 +1976,7 @@ def rewrite_ini(src, dest, namespace, collection, spec, args):
         config.write(cf)
 
 
-def rewrite_ini_section(config, key_map, section, namespace, collection, spec, args):
+def rewrite_ini_section(config, key_map, section, namespace, collection, spec, args, cdm=None):
     for keyword, plugin_type in key_map[section].items():
         try:
             # FIXME diff input format than csv?
@@ -1961,6 +1997,8 @@ def rewrite_ini_section(config, key_map, section, namespace, collection, spec, a
 
                 logger.debug(msg)
                 new_plugin_names.append(get_plugin_fqcn(plugin_namespace, plugin_collection, plugin_name))
+                if cdm:
+                    cdm.add_integration_dep('.'.join([]), new_plugin_names[-1]) 
                 integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
             except LookupError:
                 new_plugin_names.append(plugin_name)
@@ -1968,29 +2006,29 @@ def rewrite_ini_section(config, key_map, section, namespace, collection, spec, a
         config.set(section, keyword, ','.join(new_plugin_names))
 
 
-def rewrite_yaml(src, dest, namespace, collection, spec, args, checkout_dir):
+def rewrite_yaml(src, dest, namespace, collection, spec, args, checkout_dir, cdm=None):
     contents = read_ansible_yaml_file(src)
-    _rewrite_yaml(contents, namespace, collection, spec, args, dest, checkout_dir)
+    _rewrite_yaml(contents, namespace, collection, spec, args, dest, checkout_dir, cdm=cdm)
     write_ansible_yaml_into_file_as_is(dest, contents)
 
 
-def _rewrite_yaml(contents, namespace, collection, spec, args, dest, checkout_dir):
+def _rewrite_yaml(contents, namespace, collection, spec, args, dest, checkout_dir, cdm=None):
     if isinstance(contents, list):
         for el in contents:
-            _rewrite_yaml(el, namespace, collection, spec, args, dest, checkout_dir)
+            _rewrite_yaml(el, namespace, collection, spec, args, dest, checkout_dir, cdm=cdm)
     elif isinstance(contents, Mapping):
-        _rewrite_yaml_mapping(contents, namespace, collection, spec, args, dest, checkout_dir)
+        _rewrite_yaml_mapping(contents, namespace, collection, spec, args, dest, checkout_dir, cdm=cdm)
 
 
-def _rewrite_yaml_mapping(el, namespace, collection, spec, args, dest, checkout_dir):
+def _rewrite_yaml_mapping(el, namespace, collection, spec, args, dest, checkout_dir, cdm=None):
     assert isinstance(el, Mapping)
 
-    _rewrite_yaml_mapping_keys_vars(el, namespace, collection, spec, args, dest)
-    _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args, dest)
-    _rewrite_yaml_mapping_values(el, namespace, collection, spec, args, dest, checkout_dir)
+    _rewrite_yaml_mapping_keys_vars(el, namespace, collection, spec, args, dest, cdm=cdm)
+    _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args, dest, cdm=cdm)
+    _rewrite_yaml_mapping_values(el, namespace, collection, spec, args, dest, checkout_dir, cdm=cdm)
 
 
-def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args, dest):
+def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args, dest, cdm=None):
     translate = []
     for key in el.keys():
         if key not in KEYWORDS_TO_PLUGIN_MAP and is_reserved_name(key):
@@ -2014,6 +2052,8 @@ def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args, d
 
                 logger.debug(msg)
                 translate.append((prefix + get_plugin_fqcn(plugin_namespace, plugin_collection, plugin_name), key))
+                if cdm:
+                    cdm.add_integration_dep('.'.join([plugin_namespace, plugin_collection]), dest + ':' + key)
                 integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
             except LookupError:
                 pass
@@ -2035,10 +2075,12 @@ def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args, d
 
                     logger.debug(msg)
                     translate.append((new_module_name, key))
+                    if cdm:
+                        cdm.add_integration_dep('.'.join([ns, coll]), dest + ':' + new_module_name)
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
         if key in KEYWORDS_TO_PLUGIN_MAP:
-            _rewrite_yaml_mapping_value(namespace, collection, el, key, KEYWORDS_TO_PLUGIN_MAP[key], spec, args, dest)
+            _rewrite_yaml_mapping_value(namespace, collection, el, key, KEYWORDS_TO_PLUGIN_MAP[key], spec, args, dest, cdm=cdm)
 
         # https://github.com/ansible-community/collection_migration/issues/98
         if key == 'mode' and isinstance(el[key], int):
@@ -2052,7 +2094,7 @@ def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args, d
         el[new_key] = el.pop(old_key)
 
 
-def _rewrite_yaml_mapping_value(namespace, collection, el, key, plugin_type, spec, args, dest):
+def _rewrite_yaml_mapping_value(namespace, collection, el, key, plugin_type, spec, args, dest, cdm=None):
     try:
         plugin_namespace, plugin_collection = get_plugin_collection(el[key], plugin_type, spec)
     except LookupError:
@@ -2070,26 +2112,28 @@ def _rewrite_yaml_mapping_value(namespace, collection, el, key, plugin_type, spe
 
     logger.debug(msg)
     el[key] = new_plugin_name
+    if cdm:
+        cdm.add_integration_dep('.'.join([plugin_namespace, plugin_collection]), dest + ':' + new_plugin_name)
     integration_tests_add_to_deps((namespace, collection), (plugin_namespace, plugin_collection))
 
 
-def _rewrite_yaml_mapping_keys_vars(el, namespace, collection, spec, args, dest):
+def _rewrite_yaml_mapping_keys_vars(el, namespace, collection, spec, args, dest, cdm=None):
     for key in el.keys():
         if key in VARNAMES_TO_PLUGIN_MAP:
-            _rewrite_yaml_mapping_value(namespace, collection, el, key, VARNAMES_TO_PLUGIN_MAP[key], spec, args, dest)
+            _rewrite_yaml_mapping_value(namespace, collection, el, key, VARNAMES_TO_PLUGIN_MAP[key], spec, args, dest, cdm=cdm)
 
 
-def _rewrite_yaml_mapping_values(el, namespace, collection, spec, args, dest, checkout_dir):
+def _rewrite_yaml_mapping_values(el, namespace, collection, spec, args, dest, checkout_dir, cdm=None):
     for key, value in el.items():
         if isinstance(value, Mapping):
             if key == 'vars':
-                _rewrite_yaml_mapping_keys_vars(el[key], namespace, collection, spec, args, dest)
+                _rewrite_yaml_mapping_keys_vars(el[key], namespace, collection, spec, args, dest, cdm=cdm)
             if key != 'vars':
-                _rewrite_yaml_mapping_keys_non_vars(el[key], namespace, collection, spec, args, dest)
+                _rewrite_yaml_mapping_keys_non_vars(el[key], namespace, collection, spec, args, dest, cdm=cdm)
         elif isinstance(value, list):
             for idx, item in enumerate(value):
                 if isinstance(item, Mapping):
-                    _rewrite_yaml_mapping(el[key][idx], namespace, collection, spec, args, dest, checkout_dir)
+                    _rewrite_yaml_mapping(el[key][idx], namespace, collection, spec, args, dest, checkout_dir, cdm=cdm)
                 else:
                     if key == 'module_blacklist':
                         for ns in spec.keys():
@@ -2101,18 +2145,23 @@ def _rewrite_yaml_mapping_values(el, namespace, collection, spec, args, dest, ch
                                         raise RuntimeError(msg)
                                     logger.debug(msg)
                                     el[key][idx] = new_plugin_name
+                                    if cdm:
+                                        cdm.add_integration_dep(
+                                            '.'.join([ins, coll]),
+                                            dest + ':' + new_plugin_name
+                                        )
                                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
                     if isinstance(el[key][idx], str):
-                        el[key][idx] = _rewrite_yaml_lookup(el[key][idx], namespace, collection, spec, args)
-                        el[key][idx] = _rewrite_yaml_filter(el[key][idx], namespace, collection, spec, args, checkout_dir)
-                        el[key][idx] = _rewrite_yaml_test(el[key][idx], namespace, collection, spec, args, checkout_dir)
+                        el[key][idx] = _rewrite_yaml_lookup(el[key][idx], namespace, collection, spec, args, cdm=cdm)
+                        el[key][idx] = _rewrite_yaml_filter(el[key][idx], namespace, collection, spec, args, checkout_dir, cdm=cdm)
+                        el[key][idx] = _rewrite_yaml_test(el[key][idx], namespace, collection, spec, args, checkout_dir, cdm=cdm)
         elif isinstance(value, str):
-            el[key] = _rewrite_yaml_lookup(el[key], namespace, collection, spec, args)
-            el[key] = _rewrite_yaml_filter(el[key], namespace, collection, spec, args, checkout_dir)
-            el[key] = _rewrite_yaml_test(el[key], namespace, collection, spec, args, checkout_dir)
+            el[key] = _rewrite_yaml_lookup(el[key], namespace, collection, spec, args, cdm=cdm)
+            el[key] = _rewrite_yaml_filter(el[key], namespace, collection, spec, args, checkout_dir, cdm=cdm)
+            el[key] = _rewrite_yaml_test(el[key], namespace, collection, spec, args, checkout_dir, cdm=cdm)
 
 
-def _rewrite_yaml_lookup(value, namespace, collection, spec, args):
+def _rewrite_yaml_lookup(value, namespace, collection, spec, args, cdm=None):
     if not ('lookup(' in value or 'query(' in value or 'q(' in value):
         return value
 
@@ -2128,6 +2177,8 @@ def _rewrite_yaml_lookup(value, namespace, collection, spec, args):
 
                 logger.debug(msg)
                 value = value.replace(plugin_name, new_plugin_name)
+                if cdm:
+                    cdm.add_integration_dep('.'.join([]), new_plugin_name)
                 integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
     return value
@@ -2148,7 +2199,7 @@ def get_python_module(module_name, module_locations):
     return imported_module
 
 
-def _rewrite_yaml_filter(value, namespace, collection, spec, args, checkout_dir):
+def _rewrite_yaml_filter(value, namespace, collection, spec, args, checkout_dir, cdm=None):
     if '|' not in value:
         return value
     for ns in spec.keys():
@@ -2174,12 +2225,14 @@ def _rewrite_yaml_filter(value, namespace, collection, spec, args, checkout_dir)
 
                     logger.debug(msg)
                     value = value.replace(found_filter, new_plugin_name)
+                    if cdm:
+                        cdm.add_integration_dep('.'.join([ns, coll]), new_plugin_name)
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
     return value
 
 
-def _rewrite_yaml_test(value, namespace, collection, spec, args, checkout_dir):
+def _rewrite_yaml_test(value, namespace, collection, spec, args, checkout_dir, cdm=None):
     if ' is ' not in value:
         return value
     for ns in spec.keys():
@@ -2205,6 +2258,7 @@ def _rewrite_yaml_test(value, namespace, collection, spec, args, checkout_dir):
 
                     logger.debug(msg)
                     value = value.replace(found_test, new_plugin_name)
+                    import epdb; epdb.st()
                     integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
     return value
