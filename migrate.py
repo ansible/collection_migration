@@ -1997,29 +1997,30 @@ def _rewrite_yaml_mapping(el, namespace, collection, spec, args, dest, checkout_
 def _rewrite_yaml_mapping_keys_non_vars(el, namespace, collection, spec, args, dest):
     translate = []
 
-    m = ModuleArgsParser(el)
-    try:
-        module_name, module_args, to = m.parse()
+    if all(isinstance(key, str) for key in el.keys()):
+        try:
+            module_name, _, _ = ModuleArgsParser(el).parse()
+        except AnsibleParserError:
+            module_name = None
 
-        for ns in spec.keys():
-            for coll in get_rewritable_collections(ns, spec):
-                if collection == coll:
-                    # https://github.com/ansible-community/collection_migration/issues/156
-                    continue
+        if module_name:
+            for ns in spec.keys():
+                for coll in get_rewritable_collections(ns, spec):
+                    if collection == coll:
+                        # https://github.com/ansible-community/collection_migration/issues/156
+                        continue
 
-                if module_name not in get_plugins_from_collection(ns, coll, 'modules', spec):
-                    continue
+                    if module_name not in get_plugins_from_collection(ns, coll, 'modules', spec):
+                        continue
 
-                new_module_name = get_plugin_fqcn(ns, coll, module_name)
-                msg = 'Rewriting to %s' % new_module_name
-                if args.fail_on_core_rewrite:
-                    raise RuntimeError(msg)
+                    new_module_name = get_plugin_fqcn(ns, coll, module_name)
+                    msg = 'Rewriting to %s' % new_module_name
+                    if args.fail_on_core_rewrite:
+                        raise RuntimeError(msg)
 
-                logger.debug(msg)
-                translate.append((new_module_name, module_name))
-                integration_tests_add_to_deps((namespace, collection), (ns, coll))
-    except AnsibleParserError:
-        pass
+                    logger.debug(msg)
+                    translate.append((new_module_name, module_name))
+                    integration_tests_add_to_deps((namespace, collection), (ns, coll))
 
     for key in el.keys():
         if key not in KEYWORDS_TO_PLUGIN_MAP and is_reserved_name(key):
