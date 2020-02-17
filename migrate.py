@@ -635,7 +635,7 @@ def rewrite_unit_tests_patch(mod_fst, collection, spec, namespace, args):
     )
 
     preserve_module_subdirs = False
-    options = spec[namespace][collection].get('_options')
+    options = spec[namespace][collection].get(COLLECTION_OPTIONS_KEY)
     if args.preserve_module_subdirs or options.get('perserve_module_subdirs'):
         preserve_module_subdirs = True
 
@@ -858,7 +858,7 @@ def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, arg
     """Replace imports in the python module FST."""
 
     preserve_module_subdirs = False
-    options = spec[namespace][collection].get('_options')
+    options = spec[namespace][collection].get(COLLECTION_OPTIONS_KEY)
     if args.preserve_module_subdirs or options.get('perserve_module_subdirs'):
         preserve_module_subdirs = True
 
