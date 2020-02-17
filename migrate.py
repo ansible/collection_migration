@@ -1685,6 +1685,8 @@ def discover_integration_tests(checkout_dir, plugin_type, plugin_name):
     targets_dir = os.path.join(checkout_dir, 'test/integration/targets')
     # 'cloud/amazon/ec2_eip.py' -> 'ec2_eip'
     plugin_name_base = os.path.basename(os.path.splitext(plugin_name)[0])
+    # deprecated modules, '_vmware_dvs_portgroup_facts' -> 'vmware_dvs_portgroup_facts'
+    plugin_name_base = plugin_name_base.lstrip('_')
     integration_tests_files = glob.glob(os.path.join(targets_dir, plugin_name_base))
     # test/integration/targets/filter_random_mac
     integration_tests_files.extend(glob.glob(os.path.join(targets_dir, f'{plugin_type}_{plugin_name_base}')))
