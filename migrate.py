@@ -634,6 +634,11 @@ def rewrite_unit_tests_patch(mod_fst, collection, spec, namespace, args):
         )
     )
 
+    preserve_module_subdirs = False
+    options = spec[namespace][collection].get('_options')
+    if args.preserve_module_subdirs or options.get('perserve_module_subdirs'):
+        preserve_module_subdirs = True
+
     deps = []
     for el in patches:
         val = el.to_python().split('.')
@@ -686,7 +691,7 @@ def rewrite_unit_tests_patch(mod_fst, collection, spec, namespace, args):
 
             val[:token_length] = new
 
-            if plugin_type == 'modules' and not args.preserve_module_subdirs:
+            if plugin_type == 'modules' and not preserve_module_subdirs:
                 plugin_subdirs_len = len(plugin_name.split('/')[:-1])
                 new_len = len(new)
                 del val[new_len:new_len+plugin_subdirs_len]
@@ -851,6 +856,12 @@ def match_import_src(imp_src, import_map):
 
 def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, args):
     """Replace imports in the python module FST."""
+
+    preserve_module_subdirs = False
+    options = spec[namespace][collection].get('_options')
+    if args.preserve_module_subdirs or options.get('perserve_module_subdirs'):
+        preserve_module_subdirs = True
+
     deps = []
     for imp in mod_fst.find_all(('import', 'from_import')):
         imp_src = imp.value
@@ -941,7 +952,7 @@ def rewrite_imports_in_fst(mod_fst, import_map, collection, spec, namespace, arg
 
         imp_src[:token_length] = exchange  # replace the import
 
-        if plugin_type == 'modules' and not args.preserve_module_subdirs:
+        if plugin_type == 'modules' and not preserve_module_subdirs:
             plugin_subdirs_len = len(plugin_name.split('/')[:-1])
             exchange_len = len(exchange)
             del imp_src[exchange_len:exchange_len+plugin_subdirs_len]
