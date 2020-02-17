@@ -1416,7 +1416,10 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                     relative_src_plugin_path = os.path.join(src_plugin_base, plugin)
                     src = os.path.join(checkout_path, relative_src_plugin_path)
 
-                    do_preserve_subdirs = ((args.preserve_module_subdirs and plugin_type == 'modules') or plugin_type in ALWAYS_PRESERVE_SUBDIRS or options.get('preserve_module_subdirs'))
+                    do_preserve_subdirs = (
+                        ((args.preserve_module_subdirs or options.get('preserve_module_subdirs')) and plugin_type == 'modules')
+                        or plugin_type in ALWAYS_PRESERVE_SUBDIRS
+                    )
                     plugin_path_chunk = plugin if do_preserve_subdirs else os.path.basename(plugin)
 
                     # use pname as 'pinal name' so we can handle deprecated content
