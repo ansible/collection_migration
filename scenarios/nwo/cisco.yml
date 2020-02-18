@@ -218,6 +218,34 @@ nxos:
   - nxos.py
   httpapi:
   - nxos.py
+  integration:
+  - nxos_become/tasks/cli.yaml
+  - nxos_become/tasks/nxapi.yaml
+  - nxos_become/tasks/main.yaml
+  - nxos_become/tests/cli/sanity.yaml
+  - nxos_become/meta/main.yml
+  - nxos_become/defaults/main.yaml
+  - nxos_netconf/tasks/main.yaml
+  - nxos_netconf/tasks/netconf.yaml
+  - nxos_netconf/tests/netconf/basic.yaml
+  - nxos_netconf/tests/fixtures/config.yaml
+  - nxos_netconf/meta/main.yaml
+  - nxos_netconf/defaults/main.yaml
+  - nxos_nxapi_transports/tasks/nxapi.yaml
+  - nxos_nxapi_transports/tasks/main.yaml
+  - nxos_nxapi_transports/tests/nxapi/assert_test.yaml
+  - nxos_nxapi_transports/tests/nxapi/assert_transports.yaml
+  - nxos_nxapi_transports/meta/main.yml
+  - nxos_nxapi_transports/defaults/main.yaml
+  - nxos_smoke/tasks/cli.yaml
+  - nxos_smoke/tasks/nxapi.yaml
+  - nxos_smoke/tasks/main.yaml
+  - nxos_smoke/tests/cli/misc_tests.yaml
+  - nxos_smoke/tests/common/misc_tests.yaml
+  - nxos_smoke/tests/common/common_config.yaml
+  - nxos_smoke/tests/common/common_utils.yaml
+  - nxos_smoke/meta/main.yml
+  - nxos_smoke/defaults/main.yaml
   module_utils:
   - network/nxos/*
   - network/nxos/*/*
