@@ -86,6 +86,23 @@ ios:
   - ios.py
   doc_fragments:
   - ios.py
+  integration:
+  - ios_file/tasks/cli.yaml
+  - ios_file/tasks/main.yaml
+  - ios_file/tests/cli/net_get.yaml
+  - ios_file/tests/cli/net_put.yaml
+  - ios_file/defaults/main.yaml
+  - ios_file/ios1.cfg
+  - ios_file/nonascii.bin
+  - ios_smoke/tasks/cli.yaml
+  - ios_smoke/tasks/main.yaml
+  - ios_smoke/tests/cli/misc_tests.yaml
+  - ios_smoke/tests/cli/common_config.yaml
+  - ios_smoke/tests/cli/reboot.yaml
+  - ios_smoke/tests/cli/common_utils.yaml
+  - ios_smoke/meta/main.yaml
+  - ios_smoke/defaults/main.yaml
+  - ios_smoke/templates/defaults/config.j2
   module_utils:
   - network/ios/*
   - network/ios/*/*
