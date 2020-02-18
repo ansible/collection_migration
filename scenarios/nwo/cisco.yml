@@ -120,6 +120,16 @@ iosxr:
   - iosxr.py
   doc_fragments:
   - iosxr.py
+  integration:
+  - iosxr_smoke/tasks/cli.yaml
+  - iosxr_smoke/tasks/main.yaml
+  - iosxr_smoke/tasks/netconf.yaml
+  - iosxr_smoke/tests/netconf/common_netconf.yaml
+  - iosxr_smoke/tests/netconf/misc_tests.yaml
+  - iosxr_smoke/tests/cli/common_config.yaml
+  - iosxr_smoke/tests/cli/common_utils.yaml
+  - iosxr_smoke/meta/main.yaml
+  - iosxr_smoke/defaults/main.yaml
   module_utils:
   - network/iosxr/*
   - network/iosxr/*/*
