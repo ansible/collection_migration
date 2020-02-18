@@ -87,22 +87,9 @@ ios:
   doc_fragments:
   - ios.py
   integration:
-  - ios_file/tasks/cli.yaml
-  - ios_file/tasks/main.yaml
-  - ios_file/tests/cli/net_get.yaml
-  - ios_file/tests/cli/net_put.yaml
-  - ios_file/defaults/main.yaml
-  - ios_file/ios1.cfg
-  - ios_file/nonascii.bin
-  - ios_smoke/tasks/cli.yaml
-  - ios_smoke/tasks/main.yaml
-  - ios_smoke/tests/cli/misc_tests.yaml
-  - ios_smoke/tests/cli/common_config.yaml
-  - ios_smoke/tests/cli/reboot.yaml
-  - ios_smoke/tests/cli/common_utils.yaml
-  - ios_smoke/meta/main.yaml
-  - ios_smoke/defaults/main.yaml
-  - ios_smoke/templates/defaults/config.j2
+  - ios_*/*
+  - ios_*/*/*
+  - ios_*/*/*/*
   module_utils:
   - network/ios/*
   - network/ios/*/*
@@ -121,15 +108,9 @@ iosxr:
   doc_fragments:
   - iosxr.py
   integration:
-  - iosxr_smoke/tasks/cli.yaml
-  - iosxr_smoke/tasks/main.yaml
-  - iosxr_smoke/tasks/netconf.yaml
-  - iosxr_smoke/tests/netconf/common_netconf.yaml
-  - iosxr_smoke/tests/netconf/misc_tests.yaml
-  - iosxr_smoke/tests/cli/common_config.yaml
-  - iosxr_smoke/tests/cli/common_utils.yaml
-  - iosxr_smoke/meta/main.yaml
-  - iosxr_smoke/defaults/main.yaml
+  - iosxr_*/*
+  - iosxr_*/*/*
+  - iosxr_*/*/*/*
   module_utils:
   - network/iosxr/*
   - network/iosxr/*/*
@@ -219,33 +200,9 @@ nxos:
   httpapi:
   - nxos.py
   integration:
-  - nxos_become/tasks/cli.yaml
-  - nxos_become/tasks/nxapi.yaml
-  - nxos_become/tasks/main.yaml
-  - nxos_become/tests/cli/sanity.yaml
-  - nxos_become/meta/main.yml
-  - nxos_become/defaults/main.yaml
-  - nxos_netconf/tasks/main.yaml
-  - nxos_netconf/tasks/netconf.yaml
-  - nxos_netconf/tests/netconf/basic.yaml
-  - nxos_netconf/tests/fixtures/config.yaml
-  - nxos_netconf/meta/main.yaml
-  - nxos_netconf/defaults/main.yaml
-  - nxos_nxapi_transports/tasks/nxapi.yaml
-  - nxos_nxapi_transports/tasks/main.yaml
-  - nxos_nxapi_transports/tests/nxapi/assert_test.yaml
-  - nxos_nxapi_transports/tests/nxapi/assert_transports.yaml
-  - nxos_nxapi_transports/meta/main.yml
-  - nxos_nxapi_transports/defaults/main.yaml
-  - nxos_smoke/tasks/cli.yaml
-  - nxos_smoke/tasks/nxapi.yaml
-  - nxos_smoke/tasks/main.yaml
-  - nxos_smoke/tests/cli/misc_tests.yaml
-  - nxos_smoke/tests/common/misc_tests.yaml
-  - nxos_smoke/tests/common/common_config.yaml
-  - nxos_smoke/tests/common/common_utils.yaml
-  - nxos_smoke/meta/main.yml
-  - nxos_smoke/defaults/main.yaml
+  - nxos_*/*
+  - nxos_*/*/*
+  - nxos_*/*/*/*
   module_utils:
   - network/nxos/*
   - network/nxos/*/*
