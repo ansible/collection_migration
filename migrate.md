@@ -1,7 +1,7 @@
 migrating to collections
 ========================
 
-Traditionally there were 2 ways to distribute plugins (including modules) for an Ansible installation,
+Traditionaly there were 2 ways to distribute plugins (including modules) for an Ansible installation,
 use a role and then import it inside a play or install the plugin where ansible would find it (adjacent to play or in configured directories).
 
 Collections allow for a much looser and easier reference to plugins and modules and a more consolidated path to install as well as better internal reference to avoid conflicts.
