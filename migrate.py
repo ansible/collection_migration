@@ -1912,6 +1912,15 @@ def rewrite_integration_tests(test_dirs, checkout_dir, collection_dir, namespace
 
                 if ext in BAD_EXT:
                     continue
+                elif os.path.islink(src):
+                    # https://github.com/ansible-community/collection_migration/issues/411
+                    # All symbolic links will either be within the same target or to another
+                    # target which is in the same collection, so converting the symbolic
+                    # links to files is unnecessary.
+                    real_src = os.readlink(src)
+                    if os.path.exists(dest):
+                        os.remove(dest)
+                    os.symlink(real_src, dest)
                 elif ext in ('.py',):
                     import_deps, docs_deps = rewrite_py(src, dest, collection, spec, namespace, args, options)
 
