@@ -18,7 +18,7 @@ What `ansible/ansible` will become, ie `ansible-base`
   * eg `stat` is used to handle any file information internally
   * `include_tasks` is hardcoded as the implementation is inside the engine, same with `add_hosts`, `group-by`, `debug` and others, async_wrapp, async-poll, assert/fail are 'parts of the language'
 * Development
-  * Ability to run `ansible-test sanity,unit` against the Ansible code base
+  * Ability to run `ansible-test sanity,unit,integration` against the Ansible code base
 
 
 ## Windows details
@@ -79,4 +79,3 @@ Rough notes on other changes needed
 
 * `action/script` (has module)
 * `wait_for_connection` - Think this is used by ansible-test to check that machines have come up
-
