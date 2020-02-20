@@ -762,8 +762,14 @@ def rewrite_plugin_documentation(mod_fst, collection, spec, namespace, args):
 
     deps, old_fragments, new_fragments = rewrite_docs_fragments(docs_parsed_dict, collection, spec, namespace, args)
 
+    try:
+        options = docs_parsed_dict.get('options', {})
+    except AttributeError:
+        # lib/ansible/plugins/doc_fragments/emc.py
+        options = {}
+
     option_name_empty = []
-    for name, data in docs_parsed_dict.get('options', {}).items():
+    for name, data in options.items():
         if len(data.keys()) == 1 and data.get('version_added', False):
             option_name_empty.append(name)
 
