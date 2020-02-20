@@ -762,9 +762,8 @@ def rewrite_plugin_documentation(mod_fst, collection, spec, namespace, args):
 
     deps, old_fragments, new_fragments = rewrite_docs_fragments(docs_parsed_dict, collection, spec, namespace, args)
 
-    try:
-        options = docs_parsed_dict.get('options', {})
-    except AttributeError:
+    options = docs_parsed_dict.get('options', {})
+    if not isinstance(options, Mapping):
         # lib/ansible/plugins/doc_fragments/emc.py
         options = {}
 
