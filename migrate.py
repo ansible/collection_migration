@@ -1877,7 +1877,7 @@ def process_needs_target(checkout_dir, fname):
     if os.path.exists(aliases_file):
         content = read_text_from_file(aliases_file)
         for alias in content.split('\n'):
-            if not alias.startswith('needs/target/'):
+            if not alias.startswith(('needs/target/', 'setup/once/', 'setup/always/')):
                 continue
             dep = alias.split('/')[-1]
             dep_fname = os.path.join(checkout_dir, 'test/integration/targets', dep)
