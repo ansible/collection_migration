@@ -781,7 +781,6 @@ def rewrite_plugin_documentation(mod_fst, collection, spec, namespace, args):
         if not module_name:
             continue
         try:
-            import epdb; epdb.st()
             module_namespace, module_collection = get_plugin_collection(module_name, 'modules', spec)
             seealso_rewrite_map[module_name] = get_plugin_fqcn(module_namespace, module_collection, module_name)
         except LookupError:
