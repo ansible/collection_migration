@@ -429,6 +429,7 @@ general:
   integration:
   - mariadb_replication/*
   - mariadb_replication/*/*
+  - script_inventory_foreman/*
   inventory_scripts:
   - azure_rm.*
   - abiquo.ini
