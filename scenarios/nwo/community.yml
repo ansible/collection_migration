@@ -430,6 +430,7 @@ general:
   - mariadb_replication/*
   - mariadb_replication/*/*
   inventory_scripts:
+  - azure_rm.*
   - abiquo.ini
   - abiquo.py
   - apache-libcloud.py
@@ -452,7 +453,10 @@ general:
   - docker.py
   - docker.yml
   - fleet.py
+  - foreman.*
   - freeipa.py
+  - gce.*
+  - infoblox.*
   - jail.py
   - landscape.py
   - libcloud.ini
@@ -2565,6 +2569,9 @@ general:
   - slxos.py
   - sros.py
   - voss.py
+  vault:
+  - azure_vault.*
+  - vault-keyring*
 grafana:
   callback:
   - grafana_annotations.py
