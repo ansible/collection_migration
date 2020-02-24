@@ -483,9 +483,6 @@ posix:
   shell:
   - csh.py
   - fish.py
-  strategy:
-  - debug.py
-  - host_pinned.py
 windows:
   action:
   - win_copy.py
