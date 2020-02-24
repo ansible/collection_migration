@@ -476,6 +476,7 @@ general:
   - nsot.py
   - nsot.yaml
   - openshift.py
+  - openstack*
   - openvz.py
   - ovirt4.py
   - ovirt.ini
