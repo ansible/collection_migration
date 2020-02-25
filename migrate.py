@@ -1541,7 +1541,6 @@ def assemble_collections(checkout_path, spec, args, target_github_org):
                 dest_plugin_base = os.path.join(collection_dir, relative_dest_plugin_base)
                 if not os.path.exists(dest_plugin_base):
                     os.makedirs(dest_plugin_base)
-                    write_text_into_file(os.path.join(dest_plugin_base, '__init__.py'), '')
 
                 # process each plugin
                 for plugin in plugins:
