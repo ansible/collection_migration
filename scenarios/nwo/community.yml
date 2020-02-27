@@ -335,7 +335,6 @@ general:
   - zone.py
   doc_fragments:
   - a10.py
-  - acme.py
   - aireos.py
   - alicloud.py
   - aruba.py
@@ -355,7 +354,6 @@ general:
   - dimensiondata.py
   - dimensiondata_wait.py
   - docker.py
-  - ecs_credential.py
   - emc.py
   - enos.py
   - exoscale.py
