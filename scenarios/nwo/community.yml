@@ -545,19 +545,16 @@ general:
   - redis.py
   - shelvefile.py
   module_utils:
-  - acme.py
   - alicloud_ecs.py
   - cloud.py
   - cloudscale.py
   - cloudstack.py
-  - crypto.py
   - database.py
   - digital_ocean.py
   - dimensiondata.py
   - docker/__init__.py
   - docker/common.py
   - docker/swarm.py
-  - ecs/__init__.py
   - exoscale.py
   - f5_utils.py
   - firewalld.py
@@ -1409,33 +1406,6 @@ general:
   - clustering/pacemaker_cluster.py
   - clustering/znode.py
   - commands/__init__.py
-  - crypto/__init__.py
-  - crypto/acme/__init__.py
-  - crypto/acme/_acme_account_facts.py
-  - crypto/acme/acme_account.py
-  - crypto/acme/acme_account_info.py
-  - crypto/acme/acme_certificate.py
-  - crypto/acme/acme_certificate_revoke.py
-  - crypto/acme/acme_challenge_cert_helper.py
-  - crypto/acme/acme_inspect.py
-  - crypto/certificate_complete_chain.py
-  - crypto/entrust/__init__.py
-  - crypto/entrust/ecs_certificate.py
-  - crypto/entrust/ecs_domain.py
-  - crypto/get_certificate.py
-  - crypto/luks_device.py
-  - crypto/openssh_cert.py
-  - crypto/openssh_keypair.py
-  - crypto/openssl_certificate.py
-  - crypto/openssl_certificate_info.py
-  - crypto/openssl_csr.py
-  - crypto/openssl_csr_info.py
-  - crypto/openssl_dhparam.py
-  - crypto/openssl_pkcs12.py
-  - crypto/openssl_privatekey.py
-  - crypto/openssl_privatekey_info.py
-  - crypto/openssl_publickey.py
-  - crypto/x509_crl.py
   - database/__init__.py
   - database/aerospike/__init__.py
   - database/aerospike/aerospike_migrations.py
@@ -2612,6 +2582,18 @@ kubernetes:
   - clustering/openshift/__init__.py
   - clustering/openshift/_openshift_raw.py
   - clustering/openshift/_openshift_scale.py
+crypto:
+  modules:
+    - crypto/*
+    - crypto/*/*
+  doc_fragments:
+    - acme.py
+    - ecs_credential.py
+  module_utils:
+    - acme.py
+    - crypto.py
+    - ecs/__init__.py
+    - ecs/api.py
 mongo:
   modules:
     - database/mongodb/*
