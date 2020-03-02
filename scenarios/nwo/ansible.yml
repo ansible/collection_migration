@@ -455,9 +455,13 @@ posix:
   - patch.py
   - synchronize.py
   callback:
+  - cgroup_perf_recap.py
   - debug.py
+  - json.py
   - profile_roles.py
   - profile_tasks.py
+  - skippy.py
+  - timer.py
   connection:
   - chroot.py
   - funcd.py
