@@ -77,6 +77,7 @@ _core:
   action:
   - __init__.py
   - add_host.py
+  - assemble.py
   - assert.py
   - async_status.py
   - command.py
@@ -318,6 +319,7 @@ _core:
   - commands/raw.py
   - commands/script.py
   - commands/shell.py
+  - files/assemble.py
   - files/blockinfile.py
   - files/copy.py
   - files/fetch.py
@@ -451,7 +453,6 @@ netcommon:
   - default.py
 posix:
   action:
-  - assemble.py
   - patch.py
   - synchronize.py
   callback:
@@ -466,7 +467,6 @@ posix:
   - ismount.py
   modules:
   - files/acl.py
-  - files/assemble.py
   - files/synchronize.py
   - system/at.py
   - system/authorized_key.py
