@@ -1112,7 +1112,7 @@ general:
   - cloud/memset/memset_zone_record.py
   - cloud/misc/cloud_init_data_facts.py
   - cloud/misc/helm.py
-  - cloud/misc/ovirt.py
+  - cloud/misc/_ovirt.py
   - cloud/misc/proxmox.py
   - cloud/misc/proxmox_kvm.py
   - cloud/misc/proxmox_template.py
