@@ -261,7 +261,6 @@ general:
   callback:
   - actionable.py
   - cgroup_memory_recap.py
-  - cgroup_perf_recap.py
   - context_demo.py
   - counter_enabled.py
   - dense.py
@@ -269,7 +268,6 @@ general:
   - full_skip.py
   - hipchat.py
   - jabber.py
-  - json.py
   - log_plays.py
   - logdna.py
   - logentries.py
@@ -280,13 +278,11 @@ general:
   - osx_say.py
   - say.py
   - selective.py
-  - skippy.py
   - slack.py
   - splunk.py
   - stderr.py
   - sumologic.py
   - syslog_json.py
-  - timer.py
   - unixy.py
   - yaml.py
   cliconf:
@@ -321,6 +317,14 @@ general:
   - podman.py
   - qubes.py
   - saltstack.py
+  - chroot.py
+  - funcd.py
+  - iocage.py
+  - jail.py
+  - libvirt_lxc.py
+  - lxc.py
+  - lxd.py
+  - zone.py
   doc_fragments:
   - a10.py
   - aireos.py
