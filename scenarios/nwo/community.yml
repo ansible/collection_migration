@@ -311,19 +311,19 @@ general:
   - voss.py
   connection:
   - buildah.py
+  - chroot.py
   - docker.py
+  - funcd.py
+  - iocage.py
+  - jail.py
   - kubectl.py
+  - libvirt_lxc.py
+  - lxc.py
+  - lxd.py
   - oc.py
   - podman.py
   - qubes.py
   - saltstack.py
-  - chroot.py
-  - funcd.py
-  - iocage.py
-  - jail.py
-  - libvirt_lxc.py
-  - lxc.py
-  - lxd.py
   - zone.py
   doc_fragments:
   - a10.py
