@@ -462,15 +462,6 @@ posix:
   - profile_tasks.py
   - skippy.py
   - timer.py
-  connection:
-  - chroot.py
-  - funcd.py
-  - iocage.py
-  - jail.py
-  - libvirt_lxc.py
-  - lxc.py
-  - lxd.py
-  - zone.py
   module_utils:
   - ismount.py
   modules:
