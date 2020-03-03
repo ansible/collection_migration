@@ -2297,6 +2297,9 @@ general:
   - slxos.py
   - sros.py
   - voss.py
+  unit:
+  - module_utils/hwc/test_hwc_utils.py
+  - module_utils/hwc/test_dict_comparison.py
   vault:
   - azure_vault.*
   - vault-keyring*
