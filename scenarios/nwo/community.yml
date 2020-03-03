@@ -2300,6 +2300,7 @@ general:
   unit:
   - module_utils/hwc/test_hwc_utils.py
   - module_utils/hwc/test_dict_comparison.py
+  - module_utils/identity/keycloak/test_keycloak_connect.py
   vault:
   - azure_vault.*
   - vault-keyring*
