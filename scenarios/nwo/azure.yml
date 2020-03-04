@@ -24,3 +24,223 @@ azcollection:
   - cloud/azure/azure_rm_subnet.py
   - cloud/azure/azure_rm_virtualmachine.py
   - cloud/azure/azure_rm_virtualnetwork.py
+  - cloud/azure/azure_rm_aks
+  - cloud/azure/azure_rm_aks_info
+  - cloud/azure/azure_rm_aksversion_info
+  - cloud/azure/azure_rm_appgateway
+  - cloud/azure/azure_rm_applicationsecuritygroup
+  - cloud/azure/azure_rm_applicationsecuritygroup_info
+  - cloud/azure/azure_rm_appserviceplan
+  - cloud/azure/azure_rm_appserviceplan_info
+  - cloud/azure/azure_rm_availabilityset
+  - cloud/azure/azure_rm_availabilityset_info
+  - cloud/azure/azure_rm_containerinstance
+  - cloud/azure/azure_rm_containerinstance_info
+  - cloud/azure/azure_rm_containerregistry
+  - cloud/azure/azure_rm_containerregistry_info
+  - cloud/azure/azure_rm_containerregistryreplication
+  - cloud/azure/azure_rm_containerregistryreplication_facts
+  - cloud/azure/azure_rm_containerregistrywebhook
+  - cloud/azure/azure_rm_containerregistrywebhook_facts
+  - cloud/azure/azure_rm_deployment_info
+  - cloud/azure/azure_rm_functionapp
+  - cloud/azure/azure_rm_functionapp_info
+  - cloud/azure/azure_rm_gallery
+  - cloud/azure/azure_rm_gallery_info
+  - cloud/azure/azure_rm_galleryimage
+  - cloud/azure/azure_rm_galleryimage_info
+  - cloud/azure/azure_rm_galleryimageversion
+  - cloud/azure/azure_rm_galleryimageversion_info
+  - cloud/azure/azure_rm_image
+  - cloud/azure/azure_rm_image_info
+  - cloud/azure/azure_rm_keyvault
+  - cloud/azure/azure_rm_keyvault_info
+  - cloud/azure/azure_rm_keyvaultkey
+  - cloud/azure/azure_rm_keyvaultkey_info
+  - cloud/azure/azure_rm_keyvaultsecre_info
+  - cloud/azure/azure_rm_keyvaultsecret
+  - cloud/azure/azure_rm_manageddisk
+  - cloud/azure/azure_rm_manageddisk_info
+  - cloud/azure/azure_rm_resource
+  - cloud/azure/azure_rm_resource_info
+  - cloud/azure/azure_rm_resourcegroup
+  - cloud/azure/azure_rm_resourcegroup_info
+  - cloud/azure/azure_rm_snapshot
+  - cloud/azure/azure_rm_storageblob
+  - cloud/azure/azure_rm_subnet_info
+  - cloud/azure/azure_rm_virtualmachineextension
+  - cloud/azure/azure_rm_virtualmachineextension_info
+  - cloud/azure/azure_rm_virtualmachineimage_info
+  - cloud/azure/azure_rm_virtualmachinescaleset
+  - cloud/azure/azure_rm_virtualmachinescaleset_info
+  - cloud/azure/azure_rm_virtualmachinescalesetextension
+  - cloud/azure/azure_rm_virtualmachinescalesetextension_info
+  - cloud/azure/azure_rm_virtualmachinescalesetinstance
+  - cloud/azure/azure_rm_virtualmachinescalesetinstance_info
+  - cloud/azure/azure_rm_webapp
+  - cloud/azure/azure_rm_webapp_info
+  - cloud/azure/azure_rm_webappslot
+  - cloud/azure/azure_rm_automationaccount
+  - cloud/azure/azure_rm_automationaccount_info
+  - cloud/azure/azure_rm_autoscale
+  - cloud/azure/azure_rm_autoscale_info
+  - cloud/azure/azure_rm_azurefirewall
+  - cloud/azure/azure_rm_azurefirewall_info
+  - cloud/azure/azure_rm_batchaccount
+  - cloud/azure/azure_rm_cdnendpoint
+  - cloud/azure/azure_rm_cdnendpoint_info
+  - cloud/azure/azure_rm_cdnprofile
+  - cloud/azure/azure_rm_cdnprofile_info
+  - cloud/azure/azure_rm_iotdevice
+  - cloud/azure/azure_rm_iotdevice_info
+  - cloud/azure/azure_rm_iotdevicemodule
+  - cloud/azure/azure_rm_iothub
+  - cloud/azure/azure_rm_iothub_info
+  - cloud/azure/azure_rm_iothubconsumergroup
+  - cloud/azure/azure_rm_loadbalancer
+  - cloud/azure/azure_rm_loadbalancer_info
+  - cloud/azure/azure_rm_lock
+  - cloud/azure/azure_rm_lock_info
+  - cloud/azure/azure_rm_loganalyticsworkspace
+  - cloud/azure/azure_rm_loganalyticsworkspace_info
+  - cloud/azure/azure_rm_monitorlogprofile
+  - cloud/azure/azure_rm_rediscache
+  - cloud/azure/azure_rm_rediscache_info
+  - cloud/azure/azure_rm_rediscachefirewallrule
+  - cloud/azure/azure_rm_roleassignment
+  - cloud/azure/azure_rm_roleassignment_info
+  - cloud/azure/azure_rm_roledefinition
+  - cloud/azure/azure_rm_roledefinition_info
+  - cloud/azure/azure_rm_route
+  - cloud/azure/azure_rm_routetable
+  - cloud/azure/azure_rm_routetable_info
+  - cloud/azure/azure_rm_servicebus
+  - cloud/azure/azure_rm_servicebus_info
+  - cloud/azure/azure_rm_servicebusqueue
+  - cloud/azure/azure_rm_servicebussaspolicy
+  - cloud/azure/azure_rm_servicebustopic
+  - cloud/azure/azure_rm_servicebustopicsubscription
+  - cloud/azure/azure_rm_trafficmanager
+  - cloud/azure/azure_rm_trafficmanagerendpoint
+  - cloud/azure/azure_rm_trafficmanagerendpoint_info
+  - cloud/azure/azure_rm_trafficmanagerprofile
+  - cloud/azure/azure_rm_trafficmanagerprofile_info
+  - cloud/azure/azure_rm_virtualnetworkgateway
+  - cloud/azure/azure_rm_virtualnetworkpeering
+  - cloud/azure/azure_rm_virtualnetworkpeering_info
+  - cloud/azure/azure_rm_cosmosdbaccount
+  - cloud/azure/azure_rm_cosmosdbaccount_info
+  - cloud/azure/azure_rm_devtestlab
+  - cloud/azure/azure_rm_devtestlab_info
+  - cloud/azure/azure_rm_devtestlabarmtemplate_info
+  - cloud/azure/azure_rm_devtestlabartifact_info
+  - cloud/azure/azure_rm_devtestlabartifactsource
+  - cloud/azure/azure_rm_devtestlabartifactsource_info
+  - cloud/azure/azure_rm_devtestlabcustomimage
+  - cloud/azure/azure_rm_devtestlabcustomimage_info
+  - cloud/azure/azure_rm_devtestlabenvironment
+  - cloud/azure/azure_rm_devtestlabenvironment_info
+  - cloud/azure/azure_rm_devtestlabpolicy
+  - cloud/azure/azure_rm_devtestlabpolicy_info
+  - cloud/azure/azure_rm_devtestlabschedule
+  - cloud/azure/azure_rm_devtestlabschedule_info
+  - cloud/azure/azure_rm_devtestlabvirtualmachine
+  - cloud/azure/azure_rm_devtestlabvirtualmachine_info
+  - cloud/azure/azure_rm_devtestlabvirtualnetwork
+  - cloud/azure/azure_rm_devtestlabvirtualnetwork_info
+  - cloud/azure/azure_rm_hdinsightcluster
+  - cloud/azure/azure_rm_hdinsightcluster_info
+  - cloud/azure/azure_rm_mariadbconfiguration
+  - cloud/azure/azure_rm_mariadbconfiguration_info
+  - cloud/azure/azure_rm_mariadbdatabase
+  - cloud/azure/azure_rm_mariadbdatabase_info
+  - cloud/azure/azure_rm_mariadbfirewallrule
+  - cloud/azure/azure_rm_mariadbfirewallrule_info
+  - cloud/azure/azure_rm_mariadbserver
+  - cloud/azure/azure_rm_mariadbserver_info
+  - cloud/azure/azure_rm_mysqlconfiguration
+  - cloud/azure/azure_rm_mysqlconfiguration_info
+  - cloud/azure/azure_rm_mysqldatabase
+  - cloud/azure/azure_rm_mysqldatabase_info
+  - cloud/azure/azure_rm_mysqlfirewallrule
+  - cloud/azure/azure_rm_mysqlfirewallrule_info
+  - cloud/azure/azure_rm_mysqlserver
+  - cloud/azure/azure_rm_mysqlserver_info
+  - cloud/azure/azure_rm_postgresqlconfiguration
+  - cloud/azure/azure_rm_postgresqlconfiguration_info
+  - cloud/azure/azure_rm_postgresqldatabase
+  - cloud/azure/azure_rm_postgresqldatabase_info
+  - cloud/azure/azure_rm_postgresqlfirewallrule
+  - cloud/azure/azure_rm_postgresqlfirewallrule_info
+  - cloud/azure/azure_rm_postgresqlserver
+  - cloud/azure/azure_rm_postgresqlserver_info
+  - cloud/azure/azure_rm_sqldatabase
+  - cloud/azure/azure_rm_sqldatabase_info
+  - cloud/azure/azure_rm_sqlelasticpool
+  - cloud/azure/azure_rm_sqlelasticpool_facts
+  - cloud/azure/azure_rm_sqlfirewallrule
+  - cloud/azure/azure_rm_sqlfirewallrule_info
+  - cloud/azure/azure_rm_sqlserver
+  - cloud/azure/azure_rm_sqlserver_info
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
