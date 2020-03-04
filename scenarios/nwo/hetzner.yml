@@ -1,0 +1,13 @@
+hcloud:
+  doc_fragments:
+  - hcloud.py
+  inventory:
+  - hcloud.py
+  integration:
+  - vyos_*/*
+  - vyos_*/*/*
+  - vyos_*/*/*/*
+  module_utils:
+  - hcloud.py
+  modules:
+  - cloud/hcloud/*
