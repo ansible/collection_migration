@@ -1,4 +1,6 @@
 netbox:
+  inventory:
+  - netbox.py
   module_utils:
   - net_tools/netbox/netbox_utils.py
   modules:
