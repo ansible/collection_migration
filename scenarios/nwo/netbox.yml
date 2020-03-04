@@ -1,4 +1,4 @@
-ansible_modules:
+netbox:
   module_utils:
   - net_tools/netbox/netbox_utils.py
   modules:
