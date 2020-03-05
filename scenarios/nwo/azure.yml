@@ -14,6 +14,13 @@ azcollection:
   - cloud/azure/_azure_rm_storageaccount_facts.py
   - cloud/azure/_azure_rm_virtualmachine_facts.py
   - cloud/azure/_azure_rm_virtualnetwork_facts.py
+  - cloud/azure/azure_rm_dnsrecordset_info.py
+  - cloud/azure/azure_rm_dnszone_info.py
+  - cloud/azure/azure_rm_networkinterface_info.py
+  - cloud/azure/azure_rm_publicipaddress_info.py
+  - cloud/azure/azure_rm_securitygroup_info.py
+  - cloud/azure/azure_rm_storageaccount_info.py
+  - cloud/azure/azure_rm_virtualnetwork_info.py
   - cloud/azure/azure_rm_deployment.py
   - cloud/azure/azure_rm_dnsrecordset.py
   - cloud/azure/azure_rm_dnszone.py
@@ -182,4 +189,6 @@ azcollection:
   - cloud/azure/azure_rm_sqlfirewallrule_info
   - cloud/azure/azure_rm_sqlserver
   - cloud/azure/azure_rm_sqlserver_info 
-  
+  doc_fragments:
+  - azure.py
+  - azure_tags.py
