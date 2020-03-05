@@ -2276,6 +2276,8 @@ kubernetes:
   - clustering/openshift/_openshift_raw.py
   - clustering/openshift/_openshift_scale.py
 crypto:
+  _options:
+    flatmap: True
   modules:
     - crypto/*
     - crypto/*/*
