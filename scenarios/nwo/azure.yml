@@ -182,3 +182,4 @@ azcollection:
   - cloud/azure/azure_rm_sqlfirewallrule_info
   - cloud/azure/azure_rm_sqlserver
   - cloud/azure/azure_rm_sqlserver_info 
+  
