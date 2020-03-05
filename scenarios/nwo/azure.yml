@@ -122,7 +122,6 @@ azcollection:
   - cloud/azure/azure_rm_servicebussaspolicy.py
   - cloud/azure/azure_rm_servicebustopic.py
   - cloud/azure/azure_rm_servicebustopicsubscription.py
-  - cloud/azure/azure_rm_trafficmanager.py
   - cloud/azure/azure_rm_trafficmanagerendpoint.py
   - cloud/azure/azure_rm_trafficmanagerendpoint_info.py
   - cloud/azure/azure_rm_trafficmanagerprofile.py
