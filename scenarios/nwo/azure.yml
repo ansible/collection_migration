@@ -60,7 +60,7 @@ azcollection:
   - cloud/azure/azure_rm_keyvault_info.py
   - cloud/azure/azure_rm_keyvaultkey.py
   - cloud/azure/azure_rm_keyvaultkey_info.py
-  - cloud/azure/azure_rm_keyvaultsecre_info.py
+  - cloud/azure/azure_rm_keyvaultsecret_info.py
   - cloud/azure/azure_rm_keyvaultsecret.py
   - cloud/azure/azure_rm_manageddisk.py
   - cloud/azure/azure_rm_manageddisk_info.py
