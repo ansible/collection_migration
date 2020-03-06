@@ -2566,3 +2566,66 @@ windows:
   - windows/win_webpicmd.py
   - windows/win_xml.ps1
   - windows/win_xml.py
+azure: 
+  modules:
+  - cloud/azure/_azure_rm_roledefinition_facts.py
+  - cloud/azure/_azure_rm_autoscale_facts.py
+  - cloud/azure/_azure_rm_mysqldatabase_facts.py
+  - cloud/azure/_azure_rm_devtestlabschedule_facts.py
+  - cloud/azure/_azure_rm_virtualmachinescaleset_facts.py
+  - cloud/azure/_azure_rm_devtestlabcustomimage_facts.py
+  - cloud/azure/_azure_rm_cosmosdbaccount_facts.py
+  - cloud/azure/_azure_rm_subnet_facts.py
+  - cloud/azure/_azure_rm_aksversion_facts.py
+  - cloud/azure/_azure_rm_hdinsightcluster_facts.py
+  - cloud/azure/_azure_rm_virtualmachinescalesetextension_facts.py
+  - cloud/azure/_azure_rm_loadbalancer_facts.py
+  - cloud/azure/_azure_rm_roleassignment_facts.py
+  - cloud/azure/_azure_rm_manageddisk_facts.py
+  - cloud/azure/_azure_rm_mysqlserver_facts.py
+  - cloud/azure/_azure_rm_servicebus_facts.py
+  - cloud/azure/_azure_rm_rediscache_facts.py
+  - cloud/azure/_azure_rm_resource_facts.py
+  - cloud/azure/_azure_rm_routetable_facts.py
+  - cloud/azure/_azure_rm_virtualmachine_extension.py
+  - cloud/azure/_azure_rm_loganalyticsworkspace_facts.py
+  - cloud/azure/_azure_rm_sqldatabase_facts.py
+  - cloud/azure/_azure_rm_devtestlabartifactsource_facts.py
+  - cloud/azure/_azure_rm_deployment_facts.py
+  - cloud/azure/_azure_rm_virtualmachineextension_facts.py
+  - cloud/azure/_azure_rm_applicationsecuritygroup_facts.py
+  - cloud/azure/_azure_rm_availabilityset_facts.py
+  - cloud/azure/_azure_rm_mariadbdatabase_facts.py
+  - cloud/azure/_azure_rm_devtestlabenvironment_facts.py
+  - cloud/azure/_azure_rm_appserviceplan_facts.py
+  - cloud/azure/_azure_rm_containerinstance_facts.py
+  - cloud/azure/_azure_rm_devtestlabarmtemplate_facts.py
+  - cloud/azure/_azure_rm_devtestlabartifact_facts.py
+  - cloud/azure/_azure_rm_virtualmachinescalesetinstance_facts.py
+  - cloud/azure/_azure_rm_cdnendpoint_facts.py
+  - cloud/azure/_azure_rm_trafficmanagerprofile_facts.py
+  - cloud/azure/_azure_rm_functionapp_facts.py
+  - cloud/azure/_azure_rm_virtualmachineimage_facts.py
+  - cloud/azure/_azure_rm_mariadbconfiguration_facts.py
+  - cloud/azure/_azure_rm_virtualnetworkpeering_facts.py
+  - cloud/azure/_azure_rm_sqlserver_facts.py
+  - cloud/azure/_azure_rm_mariadbfirewallrule_facts.py
+  - cloud/azure/_azure_rm_mysqlconfiguration_facts.py
+  - cloud/azure/_azure_rm_mysqlfirewallrule_facts.py
+  - cloud/azure/_azure_rm_postgresqlfirewallrule_facts.py
+  - cloud/azure/_azure_rm_mariadbserver_facts.py
+  - cloud/azure/_azure_rm_postgresqldatabase_facts.py
+  - cloud/azure/_azure_rm_devtestlabvirtualnetwork_facts.py
+  - cloud/azure/_azure_rm_devtestlabpolicy_facts.py
+  - cloud/azure/_azure_rm_trafficmanagerendpoint_facts.py
+  - cloud/azure/_azure_rm_sqlfirewallrule_facts.py
+  - cloud/azure/_azure_rm_containerregistry_facts.py
+  - cloud/azure/_azure_rm_postgresqlconfiguration_facts.py
+  - cloud/azure/_azure_rm_postgresqlserver_facts.py
+  - cloud/azure/_azure_rm_devtestlab_facts.py
+  - cloud/azure/_azure_rm_cdnprofile_facts.py
+  - cloud/azure/_azure_rm_virtualmachine_scaleset.py
+  - cloud/azure/_azure_rm_webapp_facts.py
+  - cloud/azure/_azure_rm_devtestlabvirtualmachine_facts.py
+  - cloud/azure/_azure_rm_image_facts.py
+  - cloud/azure/_azure_rm_managed_disk.py
