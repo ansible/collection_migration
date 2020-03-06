@@ -717,12 +717,6 @@ general:
   - cloud/atomic/atomic_container.py
   - cloud/atomic/atomic_host.py
   - cloud/atomic/atomic_image.py
-  - cloud/azure/_azure_rm_automationaccount_facts.py
-  - cloud/azure/_azure_rm_lock_facts.py
-  - cloud/azure/_azure_rm_managed_disk_facts.py
-  - cloud/azure/_azure_rm_resourcegroup_facts.py
-  - cloud/azure/_azure_rm_virtualmachine_scaleset_facts.py
-  - cloud/centurylink/__init__.py
   - cloud/centurylink/clc_aa_policy.py
   - cloud/centurylink/clc_alert_policy.py
   - cloud/centurylink/clc_blueprint_package.py
@@ -2629,3 +2623,8 @@ azure:
   - cloud/azure/_azure_rm_devtestlabvirtualmachine_facts.py
   - cloud/azure/_azure_rm_image_facts.py
   - cloud/azure/_azure_rm_managed_disk.py
+  - cloud/azure/_azure_rm_automationaccount_facts.py
+  - cloud/azure/_azure_rm_lock_facts.py
+  - cloud/azure/_azure_rm_managed_disk_facts.py
+  - cloud/azure/_azure_rm_resourcegroup_facts.py
+  - cloud/azure/_azure_rm_virtualmachine_scaleset_facts.py
