@@ -177,8 +177,6 @@ azcollection:
   - cloud/azure/azure_rm_postgresqlserver_info.py
   - cloud/azure/azure_rm_sqldatabase.py
   - cloud/azure/azure_rm_sqldatabase_info.py
-  - cloud/azure/azure_rm_sqlelasticpool.py
-  - cloud/azure/azure_rm_sqlelasticpool_facts.py
   - cloud/azure/azure_rm_sqlfirewallrule.py
   - cloud/azure/azure_rm_sqlfirewallrule_info.py
   - cloud/azure/azure_rm_sqlserver.py
