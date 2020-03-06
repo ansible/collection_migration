@@ -239,9 +239,7 @@ ucs:
   - remote_management/ucs/ucs_managed_objects.py
   - remote_management/ucs/ucs_ntp_server.py
   - remote_management/ucs/ucs_org.py
-  - remote_management/ucs/ucs_query.py
   - remote_management/ucs/ucs_san_connectivity.py
-  - remote_management/ucs/ucs_service_profile_from_template.py
   - remote_management/ucs/ucs_service_profile_template.py
   - remote_management/ucs/ucs_storage_profile.py
   - remote_management/ucs/ucs_timezone.py
