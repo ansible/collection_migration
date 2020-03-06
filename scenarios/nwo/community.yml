@@ -724,7 +724,6 @@ general:
   - cloud/azure/_azure_rm_managed_disk_facts.py
   - cloud/azure/_azure_rm_resourcegroup_facts.py
   - cloud/azure/_azure_rm_virtualmachine_scaleset_facts.py
-  - cloud/azure/azure_rm_dnsrecordset_info.py
   - cloud/azure/azure_rm_dnszone_info.py
   - cloud/azure/azure_rm_networkinterface_info.py
   - cloud/azure/azure_rm_publicipaddress_info.py
