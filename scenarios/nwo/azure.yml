@@ -6,6 +6,8 @@ azcollection:
   - azure_rm_common_ext.py
   - azure_rm_common_rest.py
   modules:
+  - cloud/azure/azure_rm_acs.py
+  - cloud/azure/azure_rm_virtualmachine_info.py
   - cloud/azure/azure_rm_dnsrecordset_info.py
   - cloud/azure/azure_rm_dnszone_info.py
   - cloud/azure/azure_rm_networkinterface_info.py

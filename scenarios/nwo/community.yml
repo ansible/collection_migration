@@ -2562,6 +2562,15 @@ windows:
   - windows/win_xml.py
 azure: 
   modules:
+  - cloud/azure/_azure_rm_aks_facts.py
+  - cloud/azure/_azure_rm_dnsrecordset_facts.py
+  - cloud/azure/_azure_rm_dnszone_facts.py
+  - cloud/azure/_azure_rm_networkinterface_facts.py
+  - cloud/azure/_azure_rm_publicipaddress_facts.py
+  - cloud/azure/_azure_rm_securitygroup_facts.py
+  - cloud/azure/_azure_rm_storageaccount_facts.py
+  - cloud/azure/_azure_rm_virtualmachine_facts.py
+  - cloud/azure/_azure_rm_virtualnetwork_facts.py
   - cloud/azure/_azure_rm_roledefinition_facts.py
   - cloud/azure/_azure_rm_autoscale_facts.py
   - cloud/azure/_azure_rm_mysqldatabase_facts.py
