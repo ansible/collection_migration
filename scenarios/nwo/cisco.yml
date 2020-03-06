@@ -231,10 +231,24 @@ ucs:
   module_utils:
   - remote_management/ucs.py
   modules:
-  - remote_management/ucs/ucs_ip_pool.py
-  - remote_management/ucs/ucs_mac_pool.py
-  - remote_management/ucs/ucs_managed_objects.py
-  - remote_management/ucs/ucs_query.py
-  - remote_management/ucs/ucs_service_profile_template.py
-  - remote_management/ucs/ucs_uuid_pool.py
-  - remote_management/ucs/ucs_vlans.py
+  - ucs_disk_group_policy.py
+  - ucs_dns_server.py
+  - ucs_ip_pool.py
+  - ucs_lan_connectivity.py
+  - ucs_mac_pool.py
+  - ucs_managed_objects.py
+  - ucs_ntp_server.py
+  - ucs_org.py
+  - ucs_query.py
+  - ucs_san_connectivity.py
+  - ucs_service_profile_from_template.py
+  - ucs_service_profile_template.py
+  - ucs_storage_profile.py
+  - ucs_timezone.py
+  - ucs_uuid_pool.py
+  - ucs_vhba_template.py
+  - ucs_vlan_find.py
+  - ucs_vlans.py
+  - ucs_vnic_template.py
+  - ucs_vsans.py
+  - ucs_wwn_pool.py
