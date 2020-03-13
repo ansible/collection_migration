@@ -367,7 +367,6 @@ general:
   - postgres.py
   - proxysql.py
   - purestorage.py
-  - rabbitmq.py
   - rackspace.py
   - scaleway.py
   - sros.py
@@ -505,7 +504,6 @@ general:
   - onepassword.py
   - onepassword_raw.py
   - passwordstore.py
-  - rabbitmq.py
   - redis.py
   - shelvefile.py
   module_utils:
@@ -668,7 +666,6 @@ general:
   - oracle/oci_utils.py
   - postgres.py
   - pure.py
-  - rabbitmq.py
   - rax.py
   - redfish_utils.py
   - redhat.py
@@ -1210,16 +1207,6 @@ general:
   - identity/keycloak/keycloak_group.py
   - identity/onepassword_info.py
   - identity/opendj/opendj_backendprop.py
-  - messaging/rabbitmq/rabbitmq_binding.py
-  - messaging/rabbitmq/rabbitmq_exchange.py
-  - messaging/rabbitmq/rabbitmq_global_parameter.py
-  - messaging/rabbitmq/rabbitmq_parameter.py
-  - messaging/rabbitmq/rabbitmq_plugin.py
-  - messaging/rabbitmq/rabbitmq_policy.py
-  - messaging/rabbitmq/rabbitmq_queue.py
-  - messaging/rabbitmq/rabbitmq_user.py
-  - messaging/rabbitmq/rabbitmq_vhost.py
-  - messaging/rabbitmq/rabbitmq_vhost_limits.py
   - monitoring/airbrake_deployment.py
   - monitoring/bigpanda.py
   - monitoring/circonus_annotation.py
@@ -1776,7 +1763,6 @@ general:
   - notification/office_365_connector_card.py
   - notification/pushbullet.py
   - notification/pushover.py
-  - notification/rabbitmq_publish.py
   - notification/rocketchat.py
   - notification/say.py
   - notification/sendgrid.py
@@ -2154,6 +2140,25 @@ mongo:
     - mongodb.py
   lookup:
     - mongodb.py
+rabbitmq:
+  doc_fragments:
+    - rabbitmq.py
+  lookup:
+    - rabbitmq.py
+  module_utils:
+    - rabbitmq.py
+  modules:
+    - messaging/rabbitmq/rabbitmq_binding.py
+    - messaging/rabbitmq/rabbitmq_exchange.py
+    - messaging/rabbitmq/rabbitmq_global_parameter.py
+    - messaging/rabbitmq/rabbitmq_parameter.py
+    - messaging/rabbitmq/rabbitmq_plugin.py
+    - messaging/rabbitmq/rabbitmq_policy.py
+    - messaging/rabbitmq/rabbitmq_queue.py
+    - messaging/rabbitmq/rabbitmq_user.py
+    - messaging/rabbitmq/rabbitmq_vhost.py
+    - messaging/rabbitmq/rabbitmq_vhost_limits.py
+    - notification/rabbitmq_publish.py
 vmware_rest:
   doc_fragments:
     - VmwareRestModule.py
